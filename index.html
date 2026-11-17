@@ -425,6 +425,7 @@ body{overflow-x:hidden}
 .pit.c-verde{border-left-color:#22c55e;background:rgba(34,197,94,.13)}
 .pit.c-rojo{border-left-color:#ef4444;background:rgba(239,68,68,.13)}
 .pit.hecho .pmain b{text-decoration:line-through;opacity:.6}
+.pit.hecho .pqty{text-decoration:line-through;opacity:.6}
 .pit .pchk input{width:24px;height:24px;accent-color:var(--violet-hi)}
 .pmain{flex:1;min-width:0}.pmain small{display:block;color:var(--mute)}.pmain em{font-style:normal;font-weight:700}
 .pit.c-verde em{color:#4ade80}.pit.c-rojo em{color:#ff6b8a}
@@ -577,7 +578,7 @@ body.ventas #locShare { display: none !important; }
   <section id="pedView" hidden>
     <div id="pedListBox">
       <div class="rec-head">
-        <div><h2 class="rec-title">Pedidos</h2><p id="pedInfo"></p></div>
+        <div><h2 class="rec-title">Pedidos</h2><p id="pedInfo"></p><small class="soft pedcnt"></small></div>
         <div class="row"><button class="btn tape" id="pedNew" style="flex:none;height:44px" hidden>Nuevo pedido</button></div>
       </div>
       <div id="pedList"></div>
@@ -588,6 +589,7 @@ body.ventas #locShare { display: none !important; }
       <div id="pedDest"></div>
       <div id="pedAddBox" hidden style="margin-top:10px"><input class="sm" id="pedFind" autocomplete="off" placeholder="Buscar producto para agregar (nombre, vehículo, año, código)" aria-label="Agregar producto"><div class="sugg" id="pedSug"></div></div>
       <div id="pedProg" style="margin-top:10px"></div>
+      <small class="soft pedcnt"></small>
       <div class="pedtools" id="pedTools" hidden>
         <label class="chk"><input type="checkbox" id="pedAll"> Todos</label>
         <button class="btn tape" data-pc="verde" style="flex:none;height:40px">Verde · prioridad máxima</button>
@@ -3632,7 +3634,7 @@ function pedSaveCache() { try { localStorage.setItem(pedKey(), JSON.stringify({ 
 const pedDestTxt = d => d === '*' ? 'Todos los auxiliares' : (d || []).join(', ');
 const PRIO = { verde: 0, rojo: 1, '': 2 };
 const pedSorted = items => items.map((x, i) => [x, i]).sort((a, b) => (PRIO[a[0].col || ''] - PRIO[b[0].col || '']) || (a[1] - b[1])).map(x => x[0]);
-function pedTab() { $('#pedNew').hidden = !isAdmin(); showPedList(); drawPedList(); pedLoadRemote(); }
+function pedTab() { pedCnt = PED_SEG; $('#pedNew').hidden = !isAdmin(); showPedList(); drawPedList(); pedLoadRemote(); }
 function showPedList() { PED.cur = null; $('#pedListBox').hidden = false; $('#pedDet').hidden = true; }
 async function pedLoadRemote() {
   if (!API_URL || navigator.onLine === false || !SES) return;
@@ -3748,7 +3750,7 @@ $('#pedItems').addEventListener('change', async e => {
   const h = e.target.closest('[data-hecho]');
   if (h) {
     const x = p.items.find(y => y.c === h.dataset.hecho); if (!x) return;
-    x.h = h.checked; x.hp = x.h ? (SES.usuario || '') : '';
+    x.h = h.checked; x.hp = x.h ? (SES.usuario || '') : ''; x.tl = Date.now();
     PED.det[p.id] = JSON.parse(JSON.stringify({ ...p, items: p.items.map(({ sel, ...r }) => r) })); pedSaveCache();
     const li = PED.list.find(y => y.id === p.id); if (li) { li.hechos = p.items.filter(y => y.h).length; pedSaveCache(); }
     drawPedDet();
@@ -3811,6 +3813,38 @@ async function autoTick(ahora) {
 setInterval(() => autoTick(false), 20000);
 document.addEventListener('visibilitychange', () => { if (!document.hidden) { autoTick(true); chequeaVersion(); } });
 window.addEventListener('online', () => autoTick(true));
+/* Pedidos en vivo: se actualiza solo cada pocos segundos mientras miras la pestaña Pedidos */
+const PED_SEG = 4;
+let pedCnt = PED_SEG, pedBusy = false;
+function pedCntTxt(t) { document.querySelectorAll('.pedcnt').forEach(e => { e.textContent = t; }); }
+async function pedLive() {
+  const p = PED.cur;
+  if (p && !p.isNew && navigator.onLine !== false) {
+    const j = await apiGet({ action: 'pedido_get', id: p.id });
+    if (!j.ok || PED.cur !== p) return;
+    const now = Date.now();
+    const editando = isAdmin() && (p.dirty || p.items.some(x => x.sel));
+    if (!editando) {
+      const sel = {}; p.items.forEach(x => { sel[x.c] = x; });
+      const nuevos = j.items.map(r => { const o = sel[r.c]; if (o && o.tl && now - o.tl < 8000) return { ...r, h: o.h, hp: o.hp, ht: o.ht, tl: o.tl, sel: false }; return { ...r, sel: false }; });
+      p.items = nuevos; p.titulo = j.titulo; p.nota = j.nota; p.dest = j.dest; p.estado = j.estado;
+    } else {
+      p.items.forEach(x => { const r = j.items.find(y => y.c === x.c); if (r && !(x.tl && now - x.tl < 8000)) { x.h = r.h; x.hp = r.hp; x.ht = r.ht; } });
+    }
+    PED.det[p.id] = JSON.parse(JSON.stringify({ ...p, items: p.items.map(({ sel, tl, ...r }) => r) })); pedSaveCache();
+    const a = document.activeElement;
+    if (!(a && a.closest && a.closest('#pedDet') && /^(INPUT|TEXTAREA)$/.test(a.tagName) && a.type !== 'checkbox')) drawPedDet();
+  } else if (!p) await pedLoadRemote();
+}
+setInterval(async () => {
+  if ($('#pedView').hidden || document.hidden || !SES || !API_URL || document.body.classList.contains('locked')) return;
+  if (navigator.onLine === false) { pedCntTxt('Sin internet · se actualizará al volver la red'); return; }
+  if (pedBusy) { pedCntTxt('Actualizando…'); return; }
+  pedCnt--;
+  if (pedCnt > 0) { pedCntTxt('En vivo · próxima actualización en ' + pedCnt + ' s'); return; }
+  pedBusy = true; pedCntTxt('Actualizando…');
+  try { await pedLive(); } catch (e) {} finally { pedBusy = false; pedCnt = PED_SEG; pedCntTxt('En vivo · próxima actualización en ' + pedCnt + ' s'); }
+}, 1000);
 let VER0 = null, VER1 = null, hayNueva = false;
 async function chequeaVersion() {
   if (!/^https?:$/.test(location.protocol) || navigator.onLine === false) return;
