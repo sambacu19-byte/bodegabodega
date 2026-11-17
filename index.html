@@ -935,8 +935,8 @@ body.ventas #locShare { display: none !important; }
 /* =====================================================================
    CONFIGURACIÓN: pega aquí la URL de tu Apps Script (termina en /exec)
    ===================================================================== */
-const API_URL = 'https://script.google.com/macros/s/AKfycbxJKeuhi6P_lX-ZbAmEjAQPt9Kt2In1aGOJMtu50zirz2NLVTptM-HgvTTFdj_mR_8c/exec';
-const SERVER_MIN = 20;   // versión mínima de Code.gs que necesita esta web
+const API_URL = 'https://script.google.com/macros/s/AKfycbyGFC9xqyfm07uePzusZBgiI22DrTPUJmmV7Frb-TPTHb-2CoIF54OHS3ew16k1uqVk/exec';
+const SERVER_MIN = 24;   // versión mínima de Code.gs que necesita esta web
 // Sucursales: el "id" debe ser igual al de Code.gs. Cada una tiene SU PROPIA hoja de Google (su catálogo, fotos y ubicaciones).
 // embebido: true = usa el catálogo incluido abajo mientras descarga el de su hoja (solo sirve para una sucursal).
 const SUCURSALES = [
@@ -1001,9 +1001,10 @@ async function rawPost(body, ms = 25000) {
   finally { clearTimeout(tm); }
   try { return await r.json(); } catch (e) { throw new NetErr('Respuesta no válida del servidor'); }
 }
+const ACC_LARGAS = new Set(['transfer_run', 'transfer_preview', 'transfer_lista', 'drive_sync', 'organizar_fotos', 'foto_importar', 'productos_importar', 'fotos_de', 'muestreo_guardar', 'pedido_guardar']);
 async function apiAs(suc, action, payload = {}) {
   if (!SES) throw new Error('Sin sesión');
-  const j = await rawPost({ ...payload, action, suc, usuario: SES.usuario || '', clave: SES.clave });
+  const j = await rawPost({ ...payload, action, suc, usuario: SES.usuario || '', clave: SES.clave }, ACC_LARGAS.has(action) ? 120000 : 25000);
   if (j && j.auth) { sessionExpired(); throw new Error('Usuario o clave incorrectos'); }
   if (j && j.ok === false && (j.error === 'Acción desconocida' || j.error === 'PIN incorrecto'))
     j.error = 'El servidor de Google está desactualizado. En Apps Script: Implementar → Administrar implementaciones → lápiz → Versión: Nueva versión → Implementar.';
@@ -1064,7 +1065,7 @@ async function flushOutbox() {
       OUT.items.shift(); outSave();
       if (j && j.ok) {
         sent++;
-        if (it.a === 'muestreo_guardar') { const m = LMUE[it.p.id]; if (m && m.mod === it.p._mod) { m.dirty = false; mueSaveLocal(); } }
+        if (it.a === 'muestreo_guardar') { const m = LMUE[it.p.id]; if (j.borrado) { delete LMUE[it.p.id]; if (MUE.cur && MUE.cur.id === it.p.id) showMueList(); mueSaveLocal(); } else if (m && m.mod === it.p._mod) { m.dirty = false; mueSaveLocal(); } }
       } else bad++;
     }
   } catch (e) { /* sesión vencida u otro error: se reintenta después */ }
@@ -2708,6 +2709,9 @@ async function drawLoginAux() {
 }
 function loginMode(adm) { $('#loginKeyBox').hidden = !adm; $('#loginAux').hidden = adm; $('#loginAdm').textContent = adm ? 'Volver a la lista de auxiliares' : 'Soy administrador o dueño'; if (adm) setTimeout(() => $('#loginClave').focus(), 60); }
 $('#loginAdm').addEventListener('click', () => loginMode($('#loginKeyBox').hidden));
+// la lista de auxiliares se renueva sola mientras la pantalla de entrada está abierta
+setInterval(() => { if ($('#loginDlg').open && !document.hidden && $('#loginKeyBox').hidden) drawLoginAux(); }, 15000);
+document.addEventListener('visibilitychange', () => { if (!document.hidden && $('#loginDlg').open && $('#loginKeyBox').hidden) drawLoginAux(); });
 $('#loginAux').addEventListener('click', e => { const b = e.target.closest('[data-u]'); if (b) doLogin(b.dataset.u, ''); });
 async function doLogin(usuario, clave) {
   usuario = usuario || ''; clave = clave || '';
@@ -2786,6 +2790,7 @@ async function mueSend(m) {
   try {
     const r = await apiQ('muestreo_guardar', payload);
     if (!r.ok) throw new Error(r.error || 'Error');
+    if (r.borrado) { delete LMUE[m.id]; mueSaveLocal(); if (MUE.cur === m) showMueList(); toast('Este muestreo fue borrado en otro dispositivo', 4200); drawMueList(); return; }
     if (!r.queued && m.mod === mod) { m.dirty = false; mueSaveLocal(); }
   } catch (e) { toast('No se pudo guardar el muestreo: ' + e.message, 4200); }
   drawMueList(); if (MUE.cur === m) drawMueSub();
@@ -2795,7 +2800,11 @@ async function mueLoadRemote() {
   if (!API_URL || navigator.onLine === false || !SES) return;
   try {
     const j = await apiGet({ action: 'muestreos' });
-    if (j.ok) MUE.remote = j.items || [];
+    if (j.ok) {
+      MUE.remote = j.items || [];
+      // lo que ya se borró en otro dispositivo se quita de este teléfono (si no tiene cambios sin enviar)
+      if (MUE.remote.length < 300) { const ids = new Set(MUE.remote.map(x => x.id)); let q = false; Object.keys(LMUE).forEach(id => { if (!LMUE[id].dirty && !ids.has(id) && !(MUE.cur && MUE.cur.id === id) && !OUT.items.some(o => o.p && o.p.id === id)) { delete LMUE[id]; q = true; } }); if (q) mueSaveLocal(); }
+    }
     if (isAdmin() && !MUE.users.length) { const u = await apiGet({ action: 'usuarios_lista' }); if (u.ok) MUE.users = ['OWNER', 'admin'].concat((u.usuarios || []).map(x => x.usuario)); }
   } catch (e) {}
   MUE.loadedOnce = true; drawMueList();
@@ -2997,13 +3006,14 @@ function openAdmin() {
   drawAdm(); $('#adminDlg').showModal(); admLoad(); admClear();
 }
 function drawAdm() {
-  $('#admTabs').innerHTML = (isMaster() ? [['usr', 'Auxiliares'], ['drv', 'Drive'], ['dte', 'Factura DTE'], ['imp', 'Subir productos'], ['mov', 'Pasar fotos y productos']] : [['usr', 'Auxiliares'], ['drv', 'Drive'], ['dte', 'Factura DTE']]).map(([k, t]) => `<button class="seg-b" data-t="${k}" aria-pressed="${ADM.tab === k}">${t}</button>`).join('');
+  $('#admTabs').innerHTML = (isMaster() ? [['usr', 'Auxiliares'], ['drv', 'Drive'], ['dte', 'Factura DTE'], ['imp', 'Subir productos'], ['mov', 'Pasar fotos y productos']] : [['usr', 'Auxiliares'], ['drv', 'Drive'], ['dte', 'Factura DTE'], ['imp', 'Subir productos']]).map(([k, t]) => `<button class="seg-b" data-t="${k}" aria-pressed="${ADM.tab === k}">${t}</button>`).join('');
   $('#admUsr').hidden = ADM.tab !== 'usr'; $('#admMov').hidden = ADM.tab !== 'mov'; $('#admImp').hidden = ADM.tab !== 'imp'; $('#admDrv').hidden = ADM.tab !== 'drv';
   $('#admSuc').hidden = !isMaster();
   $('#admSuc').innerHTML = SUCURSALES.map(s => `<button class="seg-b" data-s="${s.id}" aria-pressed="${s.id === ADM.suc}">${esc(s.nombre)}</button>`).join('');
   const opts = v => SUCURSALES.map(s => `<option value="${s.id}"${s.id === v ? ' selected' : ''}>${esc(s.nombre)}</option>`).join('');
   $('#admO').innerHTML = opts(ADM.o); $('#admD').innerHTML = opts(ADM.d);
-  const cur = $('#impSuc').value || ADM.suc; $('#impSuc').innerHTML = opts(cur) + (SUCURSALES.length > 1 ? `<option value="*"${cur === '*' ? ' selected' : ''}>Ambas sucursales (sin ubicaciones)</option>` : '');
+  if (isMaster()) { const cur = $('#impSuc').value || ADM.suc; $('#impSuc').innerHTML = opts(cur) + (SUCURSALES.length > 1 ? `<option value="*"${cur === '*' ? ' selected' : ''}>Ambas sucursales (sin ubicaciones)</option>` : ''); }
+  else $('#impSuc').innerHTML = `<option value="${SES.suc}" selected>${esc(sucInfo(SES.suc).nombre)}</option>`;   // el administrador solo actualiza su sucursal
 }
 $('#admTabs').addEventListener('click', e => { const b = e.target.closest('[data-t]'); if (b) { if (b.dataset.t === 'dte') { $('#adminDlg').close(); setView('ubi'); $('#dteDlg').showModal(); return; } ADM.tab = b.dataset.t; drawAdm(); } });
 $('#admSuc').addEventListener('click', e => { const b = e.target.closest('[data-s]'); if (b) { ADM.suc = b.dataset.s; drawAdm(); admLoad(); admClear(); } });
@@ -3116,7 +3126,7 @@ async function dteReadFile(f) {
 const dteQ = n => (Math.round(n * 100) / 100).toString().replace('.', ',');
 function dteDraw() {
   const R = DTE.rows, nf = R.filter(r => !r.it).length;
-  $('#dteAct').hidden = !R.length; $('#dteAdd').hidden = !(isMaster() && nf); $('#dteAdd').textContent = `Agregar al catálogo los ${nf} que faltan`;
+  $('#dteAct').hidden = !R.length; $('#dteAdd').hidden = !(isAdmin() && nf); $('#dteAdd').textContent = `Agregar al catálogo los ${nf} que faltan`;
   $('#dteList').innerHTML = R.map((r, k) => {
     const bins = r.it && r.it.ubs && r.it.ubs.length ? r.it.ubs.slice().reverse().map((b, j) => `<span class="bin${j ? ' old' : ''}">${esc(b.u)}${qTag(b)}</span>`).join('') : '<span class="bin none">Sin ubicación</span>';
     return `<div class="ubrow"><div><b>${esc(r.it ? r.it.d : r.d)}</b><small>${esc(r.c)} · Cant. factura: ${dteQ(r.q)}</small></div>` +
@@ -3312,15 +3322,15 @@ $('#admRun').addEventListener('click', async () => {
   if (ADM.o === ADM.d) { m.textContent = 'Elige dos sucursales distintas'; return; }
   if ($('#admSel').value === 'elegir' && !ADM.pick.size) { m.textContent = 'Marca al menos un producto'; return; }
   if (!confirm(`¿Pasar de ${sucInfo(ADM.o).nombre} a ${sucInfo(ADM.d).nombre}? Solo se copia lo que falta; nada se borra ni se duplica.`)) return;
-  ADM.busy = true; $('#admRun').disabled = true; let total = 0, prod = 0, errs = 0;
+  ADM.busy = true; $('#admRun').disabled = true; let total = 0, prod = 0, errs = 0, lastErr = '';
   try {
     for (let i = 0; i < 300; i++) {
       m.textContent = `Copiando… ${total} fotos listas` + (i ? '' : ' (puede tardar, no cierres esta ventana)');
       const j = await apiPost('transfer_run', admParams()); if (!j.ok) throw new Error(j.error || 'Error');
-      total += j.copiadas; prod += j.productosAgregados || 0; errs += j.errores || 0;
+      total += j.copiadas; prod += j.productosAgregados || 0; errs += j.errores || 0; if (j.msgError) lastErr = j.msgError;
       if (!j.copiadas || j.restantes <= 0) break;
     }
-    m.innerHTML = `✓ Listo: <b>${total}</b> fotos copiadas` + (prod ? ` · <b>${prod}</b> productos agregados` : '') + (errs ? ` · ${errs} con error (reintenta)` : '');
+    m.innerHTML = `✓ Listo: <b>${total}</b> fotos copiadas` + (prod ? ` · <b>${prod}</b> productos agregados` : '') + (errs ? ` · ${errs} con error${lastErr ? ' (' + lastErr + ')' : ''}: reintenta` : '');
     if (ADM.d === SES.suc) sync();
   } catch (e) { m.textContent = (e instanceof NetErr ? 'Se cortó el internet' : e.message) + `. Llevas ${total} fotos copiadas: vuelve a tocar «Pasar ahora» para seguir.`; }
   ADM.busy = false; $('#admRun').disabled = false;
@@ -3585,14 +3595,22 @@ async function pushInit() {
   } catch (e) {}
   b.textContent = 'Avisos'; b.classList.remove('on');
 }
+async function pushTest() {
+  try {
+    const j = await apiPost('push_prueba');
+    if (!j.ok) throw new Error(j.error || 'Error');
+    toast(!j.n ? 'Este teléfono no quedó registrado. Toca Avisos otra vez.' : j.aceptados === j.n ? 'Aviso de prueba enviado: debe llegar en unos segundos. Si no suena, revisa en los ajustes del teléfono que las notificaciones de Multipart Bodega estén activas y con sonido.' : 'Google rechazó el aviso: ' + (j.codigos[0] || 'error'), 8000);
+  } catch (e) { toast(e instanceof NetErr ? 'Necesitas internet' : 'No se pudo probar el aviso: ' + e.message, 4500); }
+}
 $('#pushBtn').addEventListener('click', async () => {
+  if (pushOK() && Notification.permission === 'granted' && $('#pushBtn').classList.contains('on')) { pushTest(); return; }
   if (!pushOK()) { toast('Para recibir avisos instala la app (menú ⋮ → Instalar app) y ábrela desde su ícono. En iPhone: Compartir → Agregar a inicio (iOS 16.4 o más).', 7000); return; }
   if (Notification.permission === 'denied') { toast('Los avisos están bloqueados. Actívalos en los ajustes del navegador (candado junto a la dirección → Notificaciones).', 7000); return; }
   try {
     if (Notification.permission !== 'granted' && (await Notification.requestPermission()) !== 'granted') { toast('No se activaron los avisos', 3000); return; }
     const sub = await pushSub(true); const j = await apiPost('push_registrar', { endpoint: sub.endpoint });
     if (!j.ok) throw new Error(j.error || 'Error');
-    toast('Listo: te avisaremos cuando te llegue un pedido', 4500); pushInit();
+    await pushInit(); pushTest();
   } catch (e) { toast(e instanceof NetErr ? 'Necesitas internet para activar los avisos' : 'No se pudieron activar los avisos: ' + e.message, 5000); }
 });
 try { navigator.serviceWorker && navigator.serviceWorker.addEventListener('message', e => { if (e.data && e.data.ir === 'pedidos' && SES) setView('ped'); }); } catch (e) {}
@@ -3610,7 +3628,21 @@ function pedTab() { $('#pedNew').hidden = !isAdmin(); showPedList(); drawPedList
 function showPedList() { PED.cur = null; $('#pedListBox').hidden = false; $('#pedDet').hidden = true; }
 async function pedLoadRemote() {
   if (!API_URL || navigator.onLine === false || !SES) return;
-  try { const j = await apiGet({ action: 'pedidos' }); if (j.ok) { PED.list = j.items || []; pedSaveCache(); if (!PED.cur) drawPedList(); } } catch (e) {}
+  try { const j = await apiGet({ action: 'pedidos' }); if (j.ok) { PED.list = j.items || []; pedSaveCache(); if (!PED.cur) drawPedList(); pedCheckNuevos(PED.list); } } catch (e) {}
+}
+// Pedido nuevo para este auxiliar: suena, vibra y avisa aunque no tenga las notificaciones del teléfono
+function pedCheckNuevos(items) {
+  if (!SES || isAdmin() || isVentas()) return;
+  const k = 'bodega_pedseen_' + SES.suc + '_' + SES.usuario; let seen = null;
+  try { seen = JSON.parse(localStorage.getItem(k) || 'null'); } catch (e) {}
+  const ids = items.map(x => x.id);
+  if (!Array.isArray(seen)) { try { localStorage.setItem(k, JSON.stringify(ids)); } catch (e) {} return; }
+  const nuevos = items.filter(x => x.estado !== 'cerrado' && !seen.includes(x.id));
+  if (!nuevos.length) return;
+  try { localStorage.setItem(k, JSON.stringify(ids.concat(seen).slice(0, 300))); } catch (e) {}
+  beep(880, 3, 0.2); vib([300, 150, 300, 150, 300]);
+  toast('📦 Pedido nuevo: ' + nuevos[0].titulo + (nuevos.length > 1 ? ` (+${nuevos.length - 1} más)` : ''), 9000);
+  try { if (document.hidden && Notification.permission === 'granted') navigator.serviceWorker.ready.then(r => r.showNotification('Multipart Bodega', { body: 'Pedido nuevo: ' + nuevos[0].titulo, icon: 'icon-192.png', tag: 'pedido-nuevo', renotify: true, vibrate: [200, 100, 200], data: { ir: 'pedidos' } })); } catch (e) {}
 }
 function drawPedList() {
   $('#pedInfo').textContent = isAdmin() ? 'Crea un pedido y envíalo a todos los auxiliares o solo a algunos.' : 'Los pedidos que te manda el administrador. Marca cada producto cuando lo tengas.';
@@ -3739,7 +3771,7 @@ async function pedSend(estadoNuevo) {
     if (!j.ok) throw new Error(j.error || 'Error');
     p.estado = est; p.isNew = false; p.dirty = false;
     PED.det[p.id] = JSON.parse(JSON.stringify({ ...p, items: p.items.map(({ sel, ...r }) => r) })); pedSaveCache();
-    toast(estadoNuevo ? (est === 'cerrado' ? 'Pedido cerrado' : 'Pedido reabierto') : 'Pedido enviado'); await pedLoadRemote(); drawPedDet();
+    toast(estadoNuevo ? (est === 'cerrado' ? 'Pedido cerrado' : 'Pedido reabierto') : 'Pedido enviado' + (j.avisoHecho ? (j.avisados ? (j.avisosOk === j.avisados ? ` · aviso mandado a ${j.avisados} ${j.avisados === 1 ? 'celular' : 'celulares'}` : ` · el aviso falló (${(j.avisosError || [])[0] || 'error'})`) : ' · nadie tiene activados los avisos todavía') : ''), j.avisoHecho ? 5500 : 2600); await pedLoadRemote(); drawPedDet();
   } catch (e) { toast('No se pudo enviar: ' + e.message, 4500); }
   b.disabled = false;
 }
@@ -3754,7 +3786,52 @@ $('#pedPrint').addEventListener('click', () => { if (!PED.cur) return; if (!PED.
 $('#pedPdf').addEventListener('click', () => { if (!PED.cur) return; if (!PED.cur.items.length) { toast('El pedido está vacío', 2500); return; } downloadPDF(pedDoc(), 'pedido-' + (PED.cur.titulo || 'sin-titulo')); });
 
 
-try { if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) navigator.serviceWorker.register('sw.js').catch(() => {}); } catch (e) {}
+/* ---------- Todo se actualiza solo: datos cada pocos segundos y la app nueva sin recargar a mano ---------- */
+let autoN = 0, autoBusy = false;
+const escribiendo = () => /^(INPUT|TEXTAREA|SELECT)$/.test((document.activeElement || {}).tagName || '');
+const hayDialogo = () => !!document.querySelector('dialog[open]');
+async function autoTick(ahora) {
+  if (autoBusy || !SES || !API_URL || document.hidden || navigator.onLine === false || document.body.classList.contains('locked')) return;
+  autoBusy = true;
+  try {
+    autoN++;
+    if (!isVentas()) await pedLoadRemote();                                   // pedidos nuevos (cada 20 s)
+    if (!$('#mueView').hidden && !MUE.cur) await mueLoadRemote();             // muestreos de otros dispositivos
+    if ((ahora || autoN % 3 === 0) && !hayDialogo() && !OUT.items.length && !escribiendo()) await sync();   // catálogo, fotos y ubicaciones (cada 60 s)
+  } catch (e) {} finally { autoBusy = false; }
+}
+setInterval(() => autoTick(false), 20000);
+document.addEventListener('visibilitychange', () => { if (!document.hidden) { autoTick(true); chequeaVersion(); } });
+window.addEventListener('online', () => autoTick(true));
+let VER0 = null, VER1 = null, hayNueva = false;
+async function chequeaVersion() {
+  if (!/^https?:$/.test(location.protocol) || navigator.onLine === false) return;
+  try {
+    const r = await fetch(location.pathname, { method: 'HEAD', cache: 'no-store' });
+    const v = (r.headers.get('etag') || '') + '|' + (r.headers.get('last-modified') || '') + '|' + (r.headers.get('content-length') || '');
+    if (v === '||') return;
+    if (VER0 === null) VER0 = v;
+    else if (v !== VER0) { if (VER1 === v) hayNueva = true; VER1 = v; }   // se confirma con dos lecturas iguales
+    else VER1 = null;
+  } catch (e) {}
+}
+function puedeRecargar() {
+  if (OUT.items.length || hayDialogo() || escribiendo() || EDIT) return false;
+  if (Object.values(LMUE).some(m => m.dirty)) return false;
+  if (PED.cur && PED.cur.dirty) return false;
+  if (UBI.rows && UBI.rows.length) return false;
+  return true;
+}
+setInterval(() => { chequeaVersion(); }, 120000);
+setInterval(() => { if (hayNueva && puedeRecargar()) location.reload(); }, 15000);
+chequeaVersion();
+try {
+  if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) {
+    navigator.serviceWorker.register('sw.js').then(reg => { setInterval(() => reg.update().catch(() => {}), 300000); }).catch(() => {});
+    let teniaSW = !!navigator.serviceWorker.controller;
+    navigator.serviceWorker.addEventListener('controllerchange', () => { if (!teniaSW) { teniaSW = true; return; } hayNueva = true; });
+  }
+} catch (e) {}
 DATA = PRODUCTOS.map(([c, d, u]) => ({ c, d, u: u || '' }));
 buildIndex(); buildFilters();
 SES = loadSes();
