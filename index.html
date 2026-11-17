@@ -546,6 +546,7 @@ body.ventas #locShare { display: none !important; }
         <div>
           <h2 class="rec-title">Muestreos</h2>
           <p>Cuenta una categoría y guarda tu avance. También funciona sin internet.</p>
+          <small class="soft pedcnt"></small>
         </div>
         <div class="row">
           <select class="sel" id="mueUser" aria-label="Filtrar por auxiliar" hidden></select>
@@ -937,7 +938,7 @@ body.ventas #locShare { display: none !important; }
 /* =====================================================================
    CONFIGURACIÓN: pega aquí la URL de tu Apps Script (termina en /exec)
    ===================================================================== */
-const API_URL = 'https://script.google.com/macros/s/AKfycbwICREwMqSQh1TF1Dhd0HdkZFp1xfY0EWKUkBUzsakw4AhB0J0tF8y_cTAFKMy3d-Vh/exec';
+const API_URL = 'https://script.google.com/macros/s/AKfycbzJlUW2i5AvhRCV2zJW8YpvKCARZ9QrQ_2IjQuzUjWbRYn3Ca33bq-ejVHXn-Rr9I9P/exec';
 const SERVER_MIN = 26;   // versión mínima de Code.gs que necesita esta web
 // Sucursales: el "id" debe ser igual al de Code.gs. Cada una tiene SU PROPIA hoja de Google (su catálogo, fotos y ubicaciones).
 // embebido: true = usa el catálogo incluido abajo mientras descarga el de su hoja (solo sirve para una sucursal).
@@ -2814,7 +2815,7 @@ async function mueLoadRemote() {
   } catch (e) {}
   MUE.loadedOnce = true; drawMueList();
 }
-function mueTab() { showMueList(); drawMueList(); mueLoadRemote(); }
+function mueTab() { pedNext = Date.now() + PED_SEG * 1000; showMueList(); drawMueList(); mueLoadRemote(); }
 function showMueList() { MUE.cur = null; $('#mueListBox').hidden = false; $('#mueDet').hidden = true; }
 
 function mueRows() {
@@ -3634,7 +3635,7 @@ function pedSaveCache() { try { localStorage.setItem(pedKey(), JSON.stringify({ 
 const pedDestTxt = d => d === '*' ? 'Todos los auxiliares' : (d || []).join(', ');
 const PRIO = { verde: 0, rojo: 1, '': 2 };
 const pedSorted = items => items.map((x, i) => [x, i]).sort((a, b) => (PRIO[a[0].col || ''] - PRIO[b[0].col || '']) || (a[1] - b[1])).map(x => x[0]);
-function pedTab() { pedCnt = PED_SEG; $('#pedNew').hidden = !isAdmin(); showPedList(); drawPedList(); pedLoadRemote(); }
+function pedTab() { pedNext = Date.now() + PED_SEG * 1000; $('#pedNew').hidden = !isAdmin(); showPedList(); drawPedList(); pedLoadRemote(); }
 function showPedList() { PED.cur = null; $('#pedListBox').hidden = false; $('#pedDet').hidden = true; }
 async function pedLoadRemote() {
   if (!API_URL || navigator.onLine === false || !SES) return;
@@ -3815,7 +3816,7 @@ document.addEventListener('visibilitychange', () => { if (!document.hidden) { au
 window.addEventListener('online', () => autoTick(true));
 /* Pedidos en vivo: se actualiza solo cada pocos segundos mientras miras la pestaña Pedidos */
 const PED_SEG = 4;
-let pedCnt = PED_SEG, pedBusy = false;
+let pedNext = Date.now() + PED_SEG * 1000, pedBusy = false;
 function pedCntTxt(t) { document.querySelectorAll('.pedcnt').forEach(e => { e.textContent = t; }); }
 async function pedLive() {
   const p = PED.cur;
@@ -3837,14 +3838,15 @@ async function pedLive() {
   } else if (!p) await pedLoadRemote();
 }
 setInterval(async () => {
-  if ($('#pedView').hidden || document.hidden || !SES || !API_URL || document.body.classList.contains('locked')) return;
+  const enPed = !$('#pedView').hidden, enMue = !$('#mueView').hidden && !MUE.cur;
+  if ((!enPed && !enMue) || document.hidden || !SES || !API_URL || document.body.classList.contains('locked')) return;
   if (navigator.onLine === false) { pedCntTxt('Sin internet · se actualizará al volver la red'); return; }
   if (pedBusy) { pedCntTxt('Actualizando…'); return; }
-  pedCnt--;
-  if (pedCnt > 0) { pedCntTxt('En vivo · próxima actualización en ' + pedCnt + ' s'); return; }
+  const falta = Math.ceil((pedNext - Date.now()) / 1000);
+  if (falta > 0) { pedCntTxt('Próxima actualización en ' + falta + ' s'); return; }
   pedBusy = true; pedCntTxt('Actualizando…');
-  try { await pedLive(); } catch (e) {} finally { pedBusy = false; pedCnt = PED_SEG; pedCntTxt('En vivo · próxima actualización en ' + pedCnt + ' s'); }
-}, 1000);
+  try { if (enPed) await pedLive(); else await mueLoadRemote(); } catch (e) {} finally { pedBusy = false; pedNext = Date.now() + PED_SEG * 1000; pedCntTxt('Próxima actualización en ' + PED_SEG + ' s'); }
+}, 250);
 let VER0 = null, VER1 = null, hayNueva = false;
 async function chequeaVersion() {
   if (!/^https?:$/.test(location.protocol) || navigator.onLine === false) return;
