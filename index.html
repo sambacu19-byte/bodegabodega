@@ -3955,16 +3955,14 @@ $('#xlsFile').addEventListener('change', async e => {
   try {
     const XL = await loadXlsx(), buf = await f.arrayBuffer(), r = xlsParse(XL, buf);
     if (!r.items.length) throw new Error('No encontré productos debajo de los encabezados.');
-    // Color de cada fila (verde = prioridad máxima · rojo = prioridad · sin color = se omite)
-    let cols;
-    try { cols = await XP.coloresFilas(new Uint8Array(buf), XL.utils.encode_col(r.colCodigo)); } catch (e) { throw new Error('No pude leer los colores del Excel. Guárdalo como .xlsx (Libro de Excel) e inténtalo otra vez.'); }
-    const todos = r.items.length; r.items.forEach(x => { x.col = cols[x.fila] || ''; });
-    r.items = r.items.filter(x => x.col);
-    if (!r.items.length) throw new Error('Ninguna fila tiene color verde o rojo. Pinta de verde (prioridad máxima) o rojo (prioridad) las que quieras pedir.');
-    Object.assign(XLS, { omitidos: todos - r.items.length, buf, nombre: f.name.replace(/\.[^.]+$/, ''), items: r.items, hdr: r.hdrFila, wb: r.wb, ws: r.ws, titulo: 'Pedido' + (r.meta.pedido ? ' ' + r.meta.pedido : ''), desde: r.meta.desde, hacia: r.meta.hacia });
+    // Entran TODAS las filas. El color solo marca la prioridad: verde = prioridad máxima · rojo = prioridad · sin color = normal
+    let cols = {}, sinColores = false;
+    try { cols = await XP.coloresFilas(new Uint8Array(buf), XL.utils.encode_col(r.colCodigo)); } catch (e) { sinColores = true; }
+    r.items.forEach(x => { x.col = cols[x.fila] || ''; });
+    Object.assign(XLS, { sinColores, buf, nombre: f.name.replace(/\.[^.]+$/, ''), items: r.items, hdr: r.hdrFila, wb: r.wb, ws: r.ws, titulo: 'Pedido' + (r.meta.pedido ? ' ' + r.meta.pedido : ''), desde: r.meta.desde, hacia: r.meta.hacia });
     XLS.opts = [SES.suc].concat(enviarA());
     const det = xlsSuc(r.meta.hacia); XLS.pick = XLS.opts.includes(det) ? det : SES.suc;
-    m.textContent = `${XLS.titulo}${r.meta.desde || r.meta.hacia ? ' · ' + (r.meta.desde || '?') + ' → ' + (r.meta.hacia || '?') : ''} · ${r.items.length} productos (${r.items.filter(x => x.col === 'verde').length} verdes, ${r.items.filter(x => x.col === 'rojo').length} rojos)` + (XLS.omitidos ? ` · ${XLS.omitidos} sin color omitidos` : '') + (det && !XLS.opts.includes(det) ? `. El destino del Excel no es una sucursal a la que puedas mandar: se usan las ubicaciones de ${sucInfo(XLS.pick).nombre}.` : '');
+    m.textContent = `${XLS.titulo}${r.meta.desde || r.meta.hacia ? ' · ' + (r.meta.desde || '?') + ' → ' + (r.meta.hacia || '?') : ''} · ${r.items.length} productos (${r.items.filter(x => x.col === 'verde').length} verdes, ${r.items.filter(x => x.col === 'rojo').length} rojos, ${r.items.filter(x => !x.col).length} sin color)` + (XLS.sinColores ? '. No pude leer los colores de este archivo (¿es .xls?): entran todos sin prioridad' : '') + (det && !XLS.opts.includes(det) ? `. El destino del Excel no es una sucursal a la que puedas mandar: se usan las ubicaciones de ${sucInfo(XLS.pick).nombre}.` : '');
     await xlsCarga();
   } catch (err) { m.textContent = err instanceof NetErr ? 'Sin internet' : err.message; }
 });
