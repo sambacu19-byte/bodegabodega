@@ -3855,12 +3855,16 @@ const XP = (() => {
       const pt = /patternType="(\w+)"/.exec(m[1]); if (!pt || pt[1] !== 'solid') return '';
       return clasifica(colorDe((/<fgColor\b[^>]*>/.exec(m[1]) || [])[0]) || [255, 255, 255]);
     });
-    const xfs = [...bloque(st, 'cellXfs').matchAll(/<xf\b[^>]*>/g)].map(m => +((/fillId="(\d+)"/.exec(m[0]) || [])[1] || 0));
+    // letras blancas (fuente): rojo con letras blancas = prioridad máxima
+    const blanca = c => !!c && c[0] > 235 && c[1] > 235 && c[2] > 235;
+    const fuentes = [...bloque(st, 'fonts').matchAll(/<font\b[^>]*>([\s\S]*?)<\/font>/g)].map(m => { const t = (/<color\b[^>]*>/.exec(m[1]) || [])[0]; return /\bindexed="9"/.test(t || '') ? true : blanca(colorDe(t)); });
+    const xfs = [...bloque(st, 'cellXfs').matchAll(/<xf\b[^>]*>/g)].map(m => ({ f: +((/fillId="(\d+)"/.exec(m[0]) || [])[1] || 0), n: +((/fontId="(\d+)"/.exec(m[0]) || [])[1] || 0) }));
     const out = {};
     const re = new RegExp('<c\\b([^>]*?)\\br="' + colL + '(\\d+)"([^>]*)>', 'g');
     for (const m of hoja.matchAll(re)) {
       const s = /\bs="(\d+)"/.exec(m[1] + ' ' + m[3]);
-      out[+m[2]] = s ? (fills[xfs[+s[1]]] || '') : '';
+      const xf = s ? xfs[+s[1]] : null, rel = xf ? (fills[xf.f] || '') : '';
+      out[+m[2]] = rel === 'rojo' && xf && fuentes[xf.n] ? 'verde' : rel;   // fondo rojo + letras blancas = máxima prioridad → verde
     }
     return out;
   }
