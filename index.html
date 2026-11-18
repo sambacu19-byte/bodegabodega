@@ -583,7 +583,7 @@ body.ventas #locShare { display: none !important; }
     <div id="pedListBox">
       <div class="rec-head">
         <div><h2 class="rec-title">Pedidos</h2><p id="pedInfo"></p><small class="soft pedcnt"></small></div>
-        <div class="row"><button class="btn tape" id="pedNew" style="flex:none;height:44px" hidden>Nuevo pedido</button></div>
+        <div class="row"><button class="btn" id="pedXls" style="flex:none;height:44px" hidden>Subir Excel</button><button class="btn tape" id="pedNew" style="flex:none;height:44px" hidden>Nuevo pedido</button></div>
       </div>
       <div class="dchips" id="pedTabs" style="margin:10px 0" hidden></div>
       <div id="pedList"></div>
@@ -688,6 +688,7 @@ body.ventas #locShare { display: none !important; }
       </select>
       <div class="row" style="margin-top:10px"><button class="btn tape" id="drvSync">Buscar fotos nuevas en Drive</button></div>
       <div class="row"><button class="btn" id="drvOrden">Ordenar en carpetas las fotos ya subidas</button></div>
+      <div class="row"><button class="btn" id="drvRep">Quitar fotos repetidas (misma imagen en el mismo producto)</button></div>
       <div class="soft" id="drvMsg" aria-live="polite" style="min-height:22px;margin-top:10px"></div>
       <hr style="border:0;border-top:1px solid var(--line,#3a3355);margin:14px 0">
       <p class="soft"><b>Subir fotos desde mi computadora o teléfono</b><br>Elige varias fotos a la vez. Cada foto se asocia al producto por el nombre del archivo: el <b>código</b> (ej: CAP-FDES08-002548N.jpg) o la <b>descripción</b> del producto. Las que no se reconozcan las asignas tú.</p>
@@ -840,6 +841,22 @@ body.ventas #locShare { display: none !important; }
   </div>
 </dialog>
 
+<dialog id="xlsDlg" aria-label="Excel de pedido">
+  <div class="pin-box wide" style="max-height:calc(100dvh - 24px);overflow-y:auto">
+    <h2>Excel de pedido</h2>
+    <p class="soft">Sube el Excel del pedido. La app lee los productos y te devuelve el mismo Excel con una columna de <b>ubicaciones</b> de la sucursal que saca las piezas. El archivo no se guarda en ningún lado.</p>
+    <input style="letter-spacing:normal;text-transform:none;font-size:14px" id="xlsFile" type="file" accept=".xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" aria-label="Excel del pedido">
+    <div id="xlsMsg" aria-live="polite" style="color:var(--mute);font-size:14px;flex:none"></div>
+    <div id="xlsSuc" class="dchips" style="flex:none" hidden></div>
+    <div id="xlsList" style="flex:none"></div>
+    <div class="row" id="xlsAct" hidden>
+      <button class="btn" id="xlsDown">Descargar Excel con ubicaciones</button>
+      <button class="btn tape" id="xlsMake">Crear pedido en la app</button>
+    </div>
+    <div class="row"><button class="btn" id="xlsNo">Cerrar</button></div>
+  </div>
+</dialog>
+
 <dialog id="locDlg" aria-label="Ubicaciones del producto">
   <div class="pin-box">
     <h2>Ubicaciones</h2>
@@ -942,8 +959,8 @@ body.ventas #locShare { display: none !important; }
 /* =====================================================================
    CONFIGURACIÓN: pega aquí la URL de tu Apps Script (termina en /exec)
    ===================================================================== */
-const API_URL = 'https://script.google.com/macros/s/AKfycbwEEzdA7KfafxrKdLcTOqZQup30BDuRiHmS82YkjcLm6B9KhfeeyAQbWlbgjn6SuuHv/exec';
-const SERVER_MIN = 28;   // versión mínima de Code.gs que necesita esta web
+const API_URL = 'https://script.google.com/macros/s/AKfycbxsGqFts8f7ekGRzI836Syi7XJo2Vtynzn5EaJ_82H8lyP8-4-f9jqt2Q2drK7TYfrI/exec';
+const SERVER_MIN = 30;   // versión mínima de Code.gs que necesita esta web
 // Sucursales: el "id" debe ser igual al de Code.gs. Cada una tiene SU PROPIA hoja de Google (su catálogo, fotos y ubicaciones).
 // embebido: true = usa el catálogo incluido abajo mientras descarga el de su hoja (solo sirve para una sucursal).
 const SUCURSALES = [
@@ -1015,7 +1032,7 @@ async function rawPost(body, ms = 25000) {
   finally { clearTimeout(tm); }
   try { return await r.json(); } catch (e) { throw new NetErr('Respuesta no válida del servidor'); }
 }
-const ACC_LARGAS = new Set(['transfer_run', 'transfer_preview', 'transfer_lista', 'drive_sync', 'organizar_fotos', 'foto_importar', 'productos_importar', 'fotos_de', 'muestreo_guardar', 'pedido_guardar']);
+const ACC_LARGAS = new Set(['pedido_ubic', 'transfer_run', 'transfer_preview', 'transfer_lista', 'drive_sync', 'organizar_fotos', 'foto_importar', 'productos_importar', 'fotos_de', 'muestreo_guardar', 'pedido_guardar']);
 async function apiAs(suc, action, payload = {}) {
   if (!SES) throw new Error('Sin sesión');
   const j = await rawPost({ ...payload, action, suc, usuario: SES.usuario || '', clave: SES.clave }, ACC_LARGAS.has(action) ? 120000 : 25000);
@@ -3372,15 +3389,15 @@ $('#admRun').addEventListener('click', async () => {
   if (ADM.o === ADM.d) { m.textContent = 'Elige dos sucursales distintas'; return; }
   if ($('#admSel').value === 'elegir' && !ADM.pick.size) { m.textContent = 'Marca al menos un producto'; return; }
   if (!confirm(`¿Pasar de ${sucInfo(ADM.o).nombre} a ${sucInfo(ADM.d).nombre}? Solo se copia lo que falta; nada se borra ni se duplica.`)) return;
-  ADM.busy = true; $('#admRun').disabled = true; let total = 0, prod = 0, errs = 0, lastErr = '';
+  ADM.busy = true; $('#admRun').disabled = true; let total = 0, prod = 0, errs = 0, lastErr = '', rep = 0;
   try {
     for (let i = 0; i < 300; i++) {
       m.textContent = `Copiando… ${total} fotos listas` + (i ? '' : ' (puede tardar, no cierres esta ventana)');
       const j = await apiPost('transfer_run', admParams()); if (!j.ok) throw new Error(j.error || 'Error');
-      total += j.copiadas; prod += j.productosAgregados || 0; errs += j.errores || 0; if (j.msgError) lastErr = j.msgError;
-      if (!j.copiadas || j.restantes <= 0) break;
+      total += j.copiadas; rep += j.repetidas || 0; prod += j.productosAgregados || 0; errs += j.errores || 0; if (j.msgError) lastErr = j.msgError;
+      if ((!j.copiadas && !j.repetidas) || j.restantes <= 0) break;
     }
-    m.innerHTML = `✓ Listo: <b>${total}</b> fotos copiadas` + (prod ? ` · <b>${prod}</b> productos agregados` : '') + (errs ? ` · ${errs} con error${lastErr ? ' (' + lastErr + ')' : ''}: reintenta` : '');
+    m.innerHTML = `✓ Listo: <b>${total}</b> fotos copiadas` + (rep ? ` · <b>${rep}</b> repetidas omitidas (ya estaban)` : '') + (prod ? ` · <b>${prod}</b> productos agregados` : '') + (errs ? ` · ${errs} con error${lastErr ? ' (' + lastErr + ')' : ''}: reintenta` : '');
     if (ADM.d === SES.suc) sync();
   } catch (e) { m.textContent = (e instanceof NetErr ? 'Se cortó el internet' : e.message) + `. Llevas ${total} fotos copiadas: vuelve a tocar «Pasar ahora» para seguir.`; }
   ADM.busy = false; $('#admRun').disabled = false;
@@ -3463,6 +3480,21 @@ $('#drvOrden').addEventListener('click', async () => {
     }
     m.textContent = `Listo: ${movidas} fotos ordenadas en carpetas.` + (err ? ` ${err} no se pudieron mover (revisa que sean tuyas en Drive).` : '');
   } catch (e) { m.textContent = 'Se detuvo: ' + e.message + ' (puedes volver a tocar el botón, sigue donde quedó).'; }
+  b.disabled = false;
+});
+$('#drvRep').addEventListener('click', async () => {
+  if (!confirm('Se revisan las fotos de cada producto y, si hay dos IGUALES, se quita la repetida (queda la más antigua). Van a la papelera de Drive por 30 días. ¿Seguir?')) return;
+  const m = $('#drvMsg'), b = $('#drvRep'); b.disabled = true; let quitadas = 0, desp = '';
+  try {
+    for (let i = 0; i < 300; i++) {
+      m.textContent = 'Revisando fotos repetidas… ' + quitadas + ' quitadas';
+      const j = await apiPost('fotos_repetidas', { despuesDe: desp }); if (!j.ok) throw new Error(j.error || 'Error');
+      quitadas += j.quitadas || 0; desp = j.ultimo || desp;
+      if (j.hecho) break;
+    }
+    m.textContent = quitadas ? `Listo: ${quitadas} fotos repetidas quitadas.` : 'Listo: no había fotos repetidas.';
+    drvRefreshPhotos();
+  } catch (e) { m.textContent = 'Se detuvo: ' + e.message + ' (puedes volver a tocar el botón).'; }
   b.disabled = false;
 });
 $('#adminBtn').addEventListener('click', openAdmin);
@@ -3673,8 +3705,10 @@ function pedLoadCache() { try { const c = JSON.parse(localStorage.getItem(pedKey
 function pedSaveCache() { try { localStorage.setItem(pedKey(), JSON.stringify({ list: PED.list, sent: PED.sent, det: PED.det })); } catch (e) {} }
 const pedDestTxt = d => d === '*' ? 'Todos los auxiliares' : (d || []).join(', ');
 const PRIO = { verde: 0, rojo: 1, '': 2 };
+// El administrador, mientras arma el pedido, ve lo último que agregó ARRIBA (para poner la cantidad rápido)
+const pedVista = (items, adm) => adm ? items.filter(x => x.nuevo).sort((a, b) => b.nuevo - a.nuevo).concat(pedSorted(items.filter(x => !x.nuevo))) : pedSorted(items);
 const pedSorted = items => items.map((x, i) => [x, i]).sort((a, b) => (PRIO[a[0].col || ''] - PRIO[b[0].col || '']) || (a[1] - b[1])).map(x => x[0]);
-function pedTab() { pedNext = Date.now() + PED_SEG * 1000; $('#pedNew').hidden = !isAdmin(); showPedList(); drawPedList(); pedLoadRemote(); }
+function pedTab() { pedNext = Date.now() + PED_SEG * 1000; $('#pedNew').hidden = !isAdmin(); $('#pedXls').hidden = !isAdmin(); showPedList(); drawPedList(); pedLoadRemote(); }
 function showPedList() { PED.cur = null; $('#pedListBox').hidden = false; $('#pedDet').hidden = true; }
 async function pedLoadRemote() {
   if (!API_URL || navigator.onLine === false || !SES) return;
@@ -3743,6 +3777,244 @@ $('#pedNew').addEventListener('click', async () => {
   PED.cur = { id: 'ped_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), titulo: '', nota: '', dest: '*', estado: 'abierto', items: [], isNew: true, dirty: true, creador: SES.usuario, destSuc: '' };
   $('#pedListBox').hidden = true; $('#pedDet').hidden = false; drawPedDet(); window.scrollTo(0, 0);
 });
+
+/* ---- Excel de pedido: leer, devolver con ubicaciones y crear el pedido ---- */
+/* ---- Excel: agrega una columna conservando TODO el formato original (se edita el .xlsx por dentro) ---- */
+const XP = (() => {
+  const u16 = (d, o) => d[o] | (d[o + 1] << 8), u32 = (d, o) => (d[o] | (d[o + 1] << 8) | (d[o + 2] << 16) | (d[o + 3] << 24)) >>> 0;
+  const dec = new TextDecoder('utf-8'), enc = new TextEncoder();
+  let CRC = null;
+  function crc32(b) {
+    if (!CRC) { CRC = new Uint32Array(256); for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; CRC[n] = c >>> 0; } }
+    let c = 0xFFFFFFFF; for (let i = 0; i < b.length; i++) c = CRC[(c ^ b[i]) & 255] ^ (c >>> 8); return (c ^ 0xFFFFFFFF) >>> 0;
+  }
+  async function inflate(raw) {
+    const ds = new DecompressionStream('deflate-raw'), w = ds.writable.getWriter(); w.write(raw); w.close();
+    return new Uint8Array(await new Response(ds.readable).arrayBuffer());
+  }
+  function leerZip(d) {
+    let e = d.length - 22; while (e >= 0 && u32(d, e) !== 0x06054b50) e--;
+    if (e < 0) throw new Error('No es un archivo .xlsx');
+    const n = u16(d, e + 10), cdOff = u32(d, e + 16), ents = []; let p = cdOff;
+    for (let i = 0; i < n; i++) {
+      if (u32(d, p) !== 0x02014b50) throw new Error('Archivo dañado');
+      const nl = u16(d, p + 28), el = u16(d, p + 30), cl = u16(d, p + 32);
+      ents.push({ cen: p, cenLen: 46 + nl + el + cl, flags: u16(d, p + 8), method: u16(d, p + 10), crc: u32(d, p + 16), csize: u32(d, p + 20), usize: u32(d, p + 24), lho: u32(d, p + 42), name: dec.decode(d.subarray(p + 46, p + 46 + nl)) });
+      p += 46 + nl + el + cl;
+    }
+    return { ents, cdOff };
+  }
+  const dataOf = (d, en) => { const lh = en.lho, nl = u16(d, lh + 26), el = u16(d, lh + 28); return d.subarray(lh + 30 + nl + el, lh + 30 + nl + el + en.csize); };
+  async function texto(d, en) { const raw = dataOf(d, en); return dec.decode(en.method === 0 ? raw : await inflate(raw)); }
+  const colNum = s => { let n = 0; for (const ch of s) n = n * 26 + ch.charCodeAt(0) - 64; return n; };
+  const colLet = n => { let s = ''; while (n > 0) { const m = (n - 1) % 26; s = String.fromCharCode(65 + m) + s; n = Math.floor((n - 1) / 26); } return s; };
+  const escX = t => String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  async function rutaHoja(d, por) {
+    const wb = await texto(d, por['xl/workbook.xml']);
+    const sh = /<sheet\b[^>]*>/.exec(wb); if (!sh) throw new Error('El Excel no tiene hojas');
+    const rid = (/r:id="([^"]+)"/.exec(sh[0]) || [])[1];
+    let target = 'worksheets/sheet1.xml';
+    if (por['xl/_rels/workbook.xml.rels'] && rid) {
+      const rels = await texto(d, por['xl/_rels/workbook.xml.rels']);
+      const re = new RegExp('<Relationship\\b[^>]*\\bId="' + rid + '"[^>]*>').exec(rels);
+      const tg = re && /Target="([^"]+)"/.exec(re[0]); if (tg) target = tg[1].replace(/^\//, '').replace(/^xl\//, '');
+    }
+    return 'xl/' + target;
+  }
+  // ---- Colores de relleno de las filas: 'verde' · 'rojo' · '' (sin color u otro color) ----
+  const INDEXADOS = { 2: 'FF0000', 3: '00FF00', 10: 'FF0000', 11: '00FF00', 17: '008000', 50: '99CC00', 42: '00FF00', 43: '99CC00', 57: '339966', 35: 'CCFFCC', 45: 'FF6600', 53: '993300', 29: 'FF99CC' };
+  function tinte(h, t) { const f = c => Math.round(t > 0 ? c + (255 - c) * t : c * (1 + t)); return [f(h[0]), f(h[1]), f(h[2])]; }
+  function clasifica(rgb) {
+    const r = rgb[0] / 255, g = rgb[1] / 255, b = rgb[2] / 255, mx = Math.max(r, g, b), mn = Math.min(r, g, b), dl = mx - mn;
+    if (mx < 0.12 || dl / (mx || 1) < 0.12) return '';               // negro, blanco o gris
+    let h = dl === 0 ? 0 : mx === r ? ((g - b) / dl) % 6 : mx === g ? (b - r) / dl + 2 : (r - g) / dl + 4;
+    h = (h * 60 + 360) % 360;
+    return (h <= 20 || h >= 340) ? 'rojo' : (h >= 70 && h <= 170) ? 'verde' : '';
+  }
+  async function coloresFilas(d, colL) {
+    const z = leerZip(d), por = {}; z.ents.forEach(en => { por[en.name] = en; });
+    if (!por['xl/workbook.xml'] || !por['xl/styles.xml']) throw new Error('No parece un Excel .xlsx');
+    const ruta = await rutaHoja(d, por); if (!por[ruta]) throw new Error('No encontré la hoja del pedido');
+    const st = await texto(d, por['xl/styles.xml']), hoja = await texto(d, por[ruta]);
+    const tema = [];   // 0 lt1, 1 dk1, 2 lt2, 3 dk2, 4-9 acentos
+    if (por['xl/theme/theme1.xml']) {
+      const th = await texto(d, por['xl/theme/theme1.xml']), orden = ['lt1', 'dk1', 'lt2', 'dk2', 'accent1', 'accent2', 'accent3', 'accent4', 'accent5', 'accent6'];
+      orden.forEach(k => { const m = new RegExp('<a:' + k + '>([\\s\\S]*?)</a:' + k + '>').exec(th); const v = m && (/(?:srgbClr val|lastClr)="([0-9A-Fa-f]{6})"/.exec(m[1]) || [])[1]; tema.push(v ? [parseInt(v.slice(0, 2), 16), parseInt(v.slice(2, 4), 16), parseInt(v.slice(4, 6), 16)] : null); });
+    }
+    const colorDe = tag => {
+      if (!tag) return null;
+      const rgb = /\brgb="([0-9A-Fa-f]{6,8})"/.exec(tag), th = /\btheme="(\d+)"/.exec(tag), ix = /\bindexed="(\d+)"/.exec(tag), ti = /\btint="(-?[\d.]+)"/.exec(tag);
+      let c = null;
+      if (rgb) { const v = rgb[1].slice(-6); c = [parseInt(v.slice(0, 2), 16), parseInt(v.slice(2, 4), 16), parseInt(v.slice(4, 6), 16)]; }
+      else if (th) c = tema[+th[1]] || null;
+      else if (ix && INDEXADOS[+ix[1]]) { const v = INDEXADOS[+ix[1]]; c = [parseInt(v.slice(0, 2), 16), parseInt(v.slice(2, 4), 16), parseInt(v.slice(4, 6), 16)]; }
+      return c && ti ? tinte(c, +ti[1]) : c;
+    };
+    const bloque = (xml, tag) => { const m = new RegExp('<' + tag + '\\b[^>]*>([\\s\\S]*?)</' + tag + '>').exec(xml); return m ? m[1] : ''; };
+    const fills = [...bloque(st, 'fills').matchAll(/<fill\b[^>]*>([\s\S]*?)<\/fill>/g)].map(m => {
+      const pt = /patternType="(\w+)"/.exec(m[1]); if (!pt || pt[1] !== 'solid') return '';
+      return clasifica(colorDe((/<fgColor\b[^>]*>/.exec(m[1]) || [])[0]) || [255, 255, 255]);
+    });
+    const xfs = [...bloque(st, 'cellXfs').matchAll(/<xf\b[^>]*>/g)].map(m => +((/fillId="(\d+)"/.exec(m[0]) || [])[1] || 0));
+    const out = {};
+    const re = new RegExp('<c\\b([^>]*?)\\br="' + colL + '(\\d+)"([^>]*)>', 'g');
+    for (const m of hoja.matchAll(re)) {
+      const s = /\bs="(\d+)"/.exec(m[1] + ' ' + m[3]);
+      out[+m[2]] = s ? (fills[xfs[+s[1]]] || '') : '';
+    }
+    return out;
+  }
+  // d: Uint8Array del .xlsx · filas: { numeroDeFila(1,2,3…): texto } · encabezado: { fila, texto } · devuelve Uint8Array
+  async function agregarColumna(d, filas, enc2) {
+    const z = leerZip(d), por = {}; z.ents.forEach(en => { por[en.name] = en; });
+    if (!por['xl/workbook.xml']) throw new Error('No parece un Excel válido');
+    const ruta = await rutaHoja(d, por), en = por[ruta]; if (!en) throw new Error('No encontré la hoja del pedido');
+    let xml = await texto(d, en);
+    // columna nueva = una a la derecha de la última usada
+    let maxC = 0; xml.replace(/<c\b[^>]*\br="([A-Z]+)\d+"/g, (m, c) => { maxC = Math.max(maxC, colNum(c)); return m; });
+    const dim = /<dimension\b[^>]*ref="([A-Z]+)(\d+)(?::([A-Z]+)(\d+))?"/.exec(xml); if (dim) maxC = Math.max(maxC, colNum(dim[3] || dim[1]));
+    const L = colLet(maxC + 1), todo = Object.assign({}, filas); if (enc2) todo[enc2.fila] = enc2.texto;
+    xml = xml.replace(/<row\b([^>]*?)(\/>|>([\s\S]*?)<\/row>)/g, (m, at, fin, cuerpo) => {
+      const rn = +((/\br="(\d+)"/.exec(at) || [])[1] || 0), t = todo[rn];
+      if (t === undefined || t === '') return m;
+      const celdas = (cuerpo || ''), ult = [...celdas.matchAll(/<c\b[^>]*\bs="(\d+)"/g)].pop();
+      const cel = `<c r="${L}${rn}"${ult ? ` s="${ult[1]}"` : ''} t="inlineStr"><is><t xml:space="preserve">${escX(t)}</t></is></c>`;
+      return `<row${at.replace(/\sspans="[^"]*"/, '')}>${celdas}${cel}</row>`;
+    });
+    if (dim) xml = xml.replace(/(<dimension\b[^>]*ref=")([A-Z]+\d+)(?::([A-Z]+)(\d+))?(")/, (m, a, c1, c2, r2, b) => a + c1 + ':' + L + (r2 || c1.replace(/[A-Z]+/, '')) + b);
+    // ancho de la columna nueva
+    const cols = /<cols>([\s\S]*?)<\/cols>/.exec(xml), N = maxC + 1;
+    const choca = cols && [...cols[1].matchAll(/<col\b[^>]*\bmin="(\d+)"[^>]*\bmax="(\d+)"/g)].some(x => +x[2] >= N);
+    if (!choca) { const c = `<col min="${N}" max="${N}" width="28" customWidth="1"/>`; xml = cols ? xml.replace('</cols>', c + '</cols>') : xml.replace(/<sheetData\b/, `<cols>${c}</cols><sheetData`); }
+    const nuevo = enc.encode(xml), nc = crc32(nuevo);
+    // se rearma el zip: todo igual, salvo la hoja (que se guarda sin comprimir)
+    const partes = [], cen = []; let pos = 0;
+    z.ents.forEach(e => {
+      const lh = e.lho, nl = u16(d, lh + 26), el = u16(d, lh + 28), hdr = 30 + nl + el;
+      let trozo, meth = e.method, crc = e.crc, cs = e.csize, us = e.usize, fl = e.flags;
+      if (e === en) {
+        const h = new Uint8Array(hdr); h.set(d.subarray(lh, lh + hdr));
+        const dv = new DataView(h.buffer); dv.setUint16(6, fl & ~8, true); dv.setUint16(8, 0, true); dv.setUint32(14, nc, true); dv.setUint32(18, nuevo.length, true); dv.setUint32(22, nuevo.length, true);
+        trozo = new Uint8Array(hdr + nuevo.length); trozo.set(h); trozo.set(nuevo, hdr); meth = 0; crc = nc; cs = us = nuevo.length; fl &= ~8;
+      } else {
+        let fin = lh + hdr + e.csize;
+        if (e.flags & 8) fin += u32(d, fin) === 0x08074b50 ? 16 : 12;
+        trozo = d.subarray(lh, fin);
+      }
+      const c = new Uint8Array(e.cenLen); c.set(d.subarray(e.cen, e.cen + e.cenLen));
+      const cv = new DataView(c.buffer); cv.setUint16(8, fl, true); cv.setUint16(10, meth, true); cv.setUint32(16, crc, true); cv.setUint32(20, cs, true); cv.setUint32(24, us, true); cv.setUint32(42, pos, true);
+      cen.push(c); partes.push(trozo); pos += trozo.length;
+    });
+    const cdLen = cen.reduce((a, c) => a + c.length, 0), fin = new Uint8Array(22), fv = new DataView(fin.buffer);
+    fv.setUint32(0, 0x06054b50, true); fv.setUint16(8, cen.length, true); fv.setUint16(10, cen.length, true); fv.setUint32(12, cdLen, true); fv.setUint32(16, pos, true);
+    const out = new Uint8Array(pos + cdLen + 22); let o = 0;
+    partes.concat(cen, [fin]).forEach(p => { out.set(p, o); o += p.length; });
+    return out;
+  }
+  return { agregarColumna, coloresFilas, crc32 };
+})();
+const XLS = { buf: null, nombre: '', items: [], hdr: 0, titulo: '', desde: '', hacia: '', opts: [], pick: '', ub: {}, ok: false };
+const xlsLimpia = t => nk(String(t == null ? '' : t)).replace(/[^a-z0-9 ]/g, ' ').replace(/ +/g, ' ').trim();
+function xlsSuc(txt) { const t = xlsLimpia(txt); if (/matriz/.test(t)) return 'casamatriz'; const m = /sucursal\s*(\d+)/.exec(t); return m && SUCURSALES.some(x => x.id === 'suc' + m[1]) ? 'suc' + m[1] : ''; }
+function xlsParse(XL, buf) {
+  const wb = XL.read(buf, { type: 'array' }), ws = wb.Sheets[wb.SheetNames[0]];
+  if (!ws || !ws['!ref']) throw new Error('El Excel está vacío');
+  const r0 = XL.utils.decode_range(ws['!ref']).s.r;
+  const T = XL.utils.sheet_to_json(ws, { header: 1, raw: false, blankrows: true, defval: '' });
+  let h = -1, cc = -1;
+  for (let i = 0; i < Math.min(T.length, 60) && h < 0; i++) T[i].forEach((v, j) => { if (h < 0 && /^(codigo|cod|codigo de producto|code|sku)$/.test(xlsLimpia(v))) { h = i; cc = j; } });
+  if (h < 0) throw new Error('No encontré la columna «CODIGO». Revisa que el Excel tenga los encabezados CODIGO, DESCRIPCION y CAN.');
+  const H = T[h].map(xlsLimpia);
+  const cd = H.findIndex(x => /^(descripcion|detalle|producto|nombre|description)/.test(x)), cq = H.findIndex(x => /^(can|cant|cantidad|qty)/.test(x));
+  const meta = { pedido: '', desde: '', hacia: '' };
+  for (let i = 0; i < h; i++) T[i].forEach((v, j) => {
+    const k = xlsLimpia(v); if (!k) return;
+    const val = () => { for (let m = j + 1; m < T[i].length; m++) { const x = String(T[i][m] == null ? '' : T[i][m]).trim(); if (x) return x; } return ''; };
+    if (/pedido/.test(k) && !meta.pedido) meta.pedido = val(); else if (/procedencia|origen/.test(k) && !meta.desde) meta.desde = val(); else if (/destino/.test(k) && !meta.hacia) meta.hacia = val();
+  });
+  const items = []; let vacias = 0;
+  for (let i = h + 1; i < T.length && vacias < 8; i++) {
+    const r = T[i], c = String(r[cc] == null ? '' : r[cc]).trim();
+    if (!c) { vacias++; continue; } vacias = 0;
+    if (/^(codigo|cod)$/.test(xlsLimpia(c))) continue;
+    const d = cd >= 0 ? String(r[cd] == null ? '' : r[cd]).trim() : '';
+    let q = null; if (cq >= 0) { const m = String(r[cq] == null ? '' : r[cq]).replace(/,/g, '').match(/\d+(\.\d+)?/); q = m ? Math.round(+m[0]) : null; }
+    items.push({ c, d, q, fila: r0 + i + 1 });
+  }
+  return { wb, ws, items, hdrFila: r0 + h + 1, meta, colCodigo: XL.utils.decode_range(ws['!ref']).s.c + cc };
+}
+const ubTxt = L => L.length ? L.slice().reverse().slice(0, 3).map(b => b.u + (b.q != null ? ' (' + b.q + ' PCS)' : '')).join(' / ') : 'SIN UBICACIÓN';
+$('#pedXls').addEventListener('click', () => {
+  XLS.buf = null; XLS.items = []; XLS.ok = false; $('#xlsFile').value = ''; $('#xlsMsg').textContent = ''; $('#xlsList').innerHTML = ''; $('#xlsAct').hidden = true; $('#xlsSuc').hidden = true;
+  $('#xlsDlg').showModal();
+});
+$('#xlsNo').addEventListener('click', () => $('#xlsDlg').close());
+$('#xlsFile').addEventListener('change', async e => {
+  const f = e.target.files[0]; if (!f) return; const m = $('#xlsMsg');
+  m.textContent = 'Leyendo el Excel…'; $('#xlsAct').hidden = true; $('#xlsList').innerHTML = ''; XLS.ok = false;
+  try {
+    const XL = await loadXlsx(), buf = await f.arrayBuffer(), r = xlsParse(XL, buf);
+    if (!r.items.length) throw new Error('No encontré productos debajo de los encabezados.');
+    // Color de cada fila (verde = prioridad máxima · rojo = prioridad · sin color = se omite)
+    let cols;
+    try { cols = await XP.coloresFilas(new Uint8Array(buf), XL.utils.encode_col(r.colCodigo)); } catch (e) { throw new Error('No pude leer los colores del Excel. Guárdalo como .xlsx (Libro de Excel) e inténtalo otra vez.'); }
+    const todos = r.items.length; r.items.forEach(x => { x.col = cols[x.fila] || ''; });
+    r.items = r.items.filter(x => x.col);
+    if (!r.items.length) throw new Error('Ninguna fila tiene color verde o rojo. Pinta de verde (prioridad máxima) o rojo (prioridad) las que quieras pedir.');
+    Object.assign(XLS, { omitidos: todos - r.items.length, buf, nombre: f.name.replace(/\.[^.]+$/, ''), items: r.items, hdr: r.hdrFila, wb: r.wb, ws: r.ws, titulo: 'Pedido' + (r.meta.pedido ? ' ' + r.meta.pedido : ''), desde: r.meta.desde, hacia: r.meta.hacia });
+    XLS.opts = [SES.suc].concat(enviarA());
+    const det = xlsSuc(r.meta.hacia); XLS.pick = XLS.opts.includes(det) ? det : SES.suc;
+    m.textContent = `${XLS.titulo}${r.meta.desde || r.meta.hacia ? ' · ' + (r.meta.desde || '?') + ' → ' + (r.meta.hacia || '?') : ''} · ${r.items.length} productos (${r.items.filter(x => x.col === 'verde').length} verdes, ${r.items.filter(x => x.col === 'rojo').length} rojos)` + (XLS.omitidos ? ` · ${XLS.omitidos} sin color omitidos` : '') + (det && !XLS.opts.includes(det) ? `. El destino del Excel no es una sucursal a la que puedas mandar: se usan las ubicaciones de ${sucInfo(XLS.pick).nombre}.` : '');
+    await xlsCarga();
+  } catch (err) { m.textContent = err instanceof NetErr ? 'Sin internet' : err.message; }
+});
+async function xlsCarga() {
+  const sc = $('#xlsSuc'); sc.hidden = XLS.opts.length < 2;
+  sc.innerHTML = '<span class="soft" style="align-self:center">Ubicaciones de:</span>' + XLS.opts.map(x => `<button class="seg-b" data-xp="${esc(x)}" aria-pressed="${XLS.pick === x}">${esc(sucInfo(x).nombre)}</button>`).join('');
+  XLS.ub = {}; XLS.ok = false; $('#xlsAct').hidden = true; $('#xlsList').innerHTML = '<p class="soft">Buscando ubicaciones…</p>';
+  const cods = [...new Set(XLS.items.map(x => x.c))];
+  if (XLS.pick === SES.suc) cods.forEach(c => { const it = CODEMAP_get(c); if (it) XLS.ub[c] = { dd: it.d, ub: it.ubs || [] }; });
+  else {
+    const j = await apiPost('pedido_ubic', { destSuc: XLS.pick, codigos: cods }); if (!j.ok) throw new Error(j.error || 'No se pudieron traer las ubicaciones');
+    Object.keys(j.items || {}).forEach(c => { XLS.ub[c] = { dd: j.items[c].dd, ub: j.items[c].ub.map(a => ({ u: a[0], t: a[1], q: a[2] })), raw: j.items[c].ub }; });
+  }
+  XLS.ok = true; xlsDraw();
+}
+$('#xlsSuc').addEventListener('click', async e => { const b = e.target.closest('[data-xp]'); if (!b || b.dataset.xp === XLS.pick) return; XLS.pick = b.dataset.xp; try { await xlsCarga(); } catch (err) { $('#xlsMsg').textContent = err instanceof NetErr ? 'Sin internet' : err.message; } });
+function xlsDraw() {
+  const con = XLS.items.filter(x => (XLS.ub[x.c] || { ub: [] }).ub.length).length, fuera = XLS.items.filter(x => !XLS.ub[x.c]).length;
+  $('#xlsList').innerHTML = `<p class="soft"><b>${con}</b> de ${XLS.items.length} con ubicación en ${esc(sucInfo(XLS.pick).nombre)}` + (fuera ? ` · ${fuera} no están en el catálogo de esa sucursal` : '') + '</p>' +
+    '<div class="mbox" style="max-height:38dvh;overflow-y:auto">' + XLS.items.map(x => { const f = XLS.ub[x.c]; return `<div class="pit c-${x.col}"><div class="pmain"><b>${esc((f && f.dd) || x.d || x.c)}</b><small>${esc(x.c)}${x.col ? ' · <em>' + esc(PCOL[x.col]) + '</em>' : ''}${x.q != null ? ' · ' + x.q + ' PCS' : ''}</small><div class="bins"><span class="bin${f && f.ub.length ? '' : ' none'}">${esc(ubTxt(f ? f.ub : []))}</span></div></div></div>`; }).join('') + '</div>';
+  $('#xlsAct').hidden = false;
+}
+function bajar(blob, nombre) { const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = nombre; document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 4000); }
+$('#xlsDown').addEventListener('click', async () => {
+  if (!XLS.ok) return; const b = $('#xlsDown'); b.disabled = true; const head = 'UBICACION ' + sucInfo(XLS.pick).nombre.toUpperCase(), filas = {};
+  XLS.items.forEach(x => { const f = XLS.ub[x.c]; filas[x.fila] = ubTxt(f ? f.ub : []); });
+  const mime = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', nombre = XLS.nombre + ' - ubicaciones.xlsx';
+  try {
+    let out;
+    try { out = await XP.agregarColumna(new Uint8Array(XLS.buf), filas, { fila: XLS.hdr, texto: head }); }
+    catch (e1) {   // plan B: se arma un Excel nuevo (sin los colores originales)
+      const XL = await loadXlsx(), ws = XLS.ws, rg = XL.utils.decode_range(ws['!ref']), col = rg.e.c + 1;
+      Object.keys(filas).forEach(r => { ws[XL.utils.encode_cell({ r: +r - 1, c: col })] = { t: 's', v: filas[r] }; });
+      ws[XL.utils.encode_cell({ r: XLS.hdr - 1, c: col })] = { t: 's', v: head }; rg.e.c = col; ws['!ref'] = XL.utils.encode_range(rg);
+      out = new Uint8Array(XL.write(XLS.wb, { bookType: 'xlsx', type: 'array' }));
+    }
+    bajar(new Blob([out], { type: mime }), nombre); toast('Excel descargado con ubicaciones', 3000);
+  } catch (e) { toast('No se pudo crear el Excel: ' + e.message, 4500); }
+  b.disabled = false;
+});
+$('#xlsMake').addEventListener('click', async () => {
+  if (!XLS.ok) return; if (navigator.onLine === false) { toast('Para crear un pedido necesitas internet', 3500); return; }
+  const destSuc = XLS.pick !== SES.suc ? XLS.pick : '', mapa = new Map();
+  XLS.items.forEach(x => { const m = mapa.get(x.c); if (m) { if (x.q != null) m.q = (m.q || 0) + x.q; if (x.col === 'verde') m.col = 'verde'; } else mapa.set(x.c, { c: x.c, d: x.d, q: x.q, col: x.col }); });
+  await pedLoadUsers(); if (destSuc) await pedLoadUsersX(destSuc);
+  const items = [...mapa.values()].map(x => { const f = XLS.ub[x.c], it = CODEMAP_get(x.c), o = { c: x.c, d: (!destSuc && it ? it.d : '') || x.d || (f && f.dd) || x.c, q: x.q, col: x.col || '', h: false, sel: false }; if (destSuc && f) { o.ub = f.raw || []; o.dd = f.dd; } return o; });
+  PED.cur = { id: 'ped_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), titulo: XLS.titulo, nota: '', dest: '*', estado: 'abierto', items, isNew: true, dirty: true, creador: SES.usuario, destSuc };
+  $('#xlsDlg').close(); $('#pedListBox').hidden = true; $('#pedDet').hidden = false; drawPedDet(); window.scrollTo(0, 0);
+  toast('Revisa el pedido y toca «Enviar pedido»', 4000);
+});
 $('#pedBack').addEventListener('click', () => {
   if (PED.cur && PED.cur.dirty && isAdmin() && !confirm('Hay cambios sin enviar. ¿Salir sin guardarlos?')) return;
   showPedList(); drawPedList();
@@ -3783,7 +4055,7 @@ function drawPedDet() {
   $('#pedAddBox').hidden = !adm; $('#pedTools').hidden = !adm;
   const s = p.items, hechos = s.filter(x => x.h).length, pct = s.length ? Math.round(hechos * 100 / s.length) : 0;
   $('#pedProg').innerHTML = `<div class="pbar big"><i style="width:${pct}%"></i></div><small class="soft">${hechos} de ${s.length} hechos${p.estado === 'cerrado' ? ' · Pedido cerrado' : ''}</small>`;
-  $('#pedItems').innerHTML = s.length ? '<div class="mbox">' + pedSorted(s).map(x => {
+  $('#pedItems').innerHTML = s.length ? '<div class="mbox">' + pedVista(s, adm).map(x => {
     const it = CODEMAP_get(x.c), L = pedUbs(p, x), ult = L.length ? L[L.length - 1].u : '', bins = L.length ? L.slice().reverse().slice(0, 2).map((b, k) => `<span class="bin${k ? ' old' : ''}">${esc(b.u)}${qTag(b)}</span>`).join('') : '<span class="bin none">Sin ubicación</span>';
     const chk = adm ? `<input type="checkbox" data-sel="${esc(x.c)}" ${x.sel ? 'checked' : ''} aria-label="Marcar ${esc(x.d)}">` : `<input type="checkbox" data-hecho="${esc(x.c)}" ${x.h ? 'checked' : ''} aria-label="Hecho: ${esc(x.d)}">`;
     const qty = adm ? `<input class="qin" type="number" inputmode="numeric" min="0" max="999999" data-pq="${esc(x.c)}" value="${x.q != null ? x.q : ''}" placeholder="Cant." aria-label="Cantidad pedida">` : (x.q != null ? `<span class="pqty">${x.q} PCS</span>` : '');
@@ -3816,7 +4088,7 @@ $('#pedSug').addEventListener('click', e => {
   const b = e.target.closest('[data-padd]'), p = PED.cur; if (!b || !p) return;
   const it = IDX[+b.dataset.padd]; if (!it) return;
   if (p.items.some(x => x.c === it.c)) { toast('Ya está en el pedido', 2500); return; }
-  p.items.push({ c: it.c, d: it.d, q: null, col: '', h: false, sel: false }); p.dirty = true;
+  p.items.unshift({ c: it.c, d: it.d, q: null, col: '', h: false, sel: false, nuevo: Date.now() }); p.dirty = true;
   $('#pedFind').value = ''; $('#pedSug').innerHTML = ''; drawPedDet(); $('#pedFind').focus();
 });
 $('#pedItems').addEventListener('input', e => {
@@ -3874,6 +4146,7 @@ async function pedSend(estadoNuevo) {
   try {
     const j = await apiReintenta('pedido_guardar', { destSuc: p.destSuc || undefined, id: p.id, titulo: p.titulo, nota: p.nota, dest: p.dest, estado: est, items: p.items.map(x => ({ c: x.c, d: x.d, q: x.q, col: x.col || '' })) });
     if (!j.ok) throw new Error(j.error || 'Error');
+    p.items.forEach(x => { delete x.nuevo; });
     p.estado = est; const eraNuevo = p.isNew; p.isNew = false; p.dirty = false; if (p.destSuc) { PED.vista = 'env'; pedLoadRemote(); } else if (eraNuevo) PED.vista = 'local';
     PED.det[p.id] = JSON.parse(JSON.stringify({ ...p, items: p.items.map(({ sel, ...r }) => r) })); pedSaveCache();
     toast(estadoNuevo ? (est === 'cerrado' ? 'Pedido cerrado' : 'Pedido reabierto') : 'Pedido enviado' + (p.destSuc ? ' a ' + sucInfo(p.destSuc).nombre : '') + (j.avisoHecho ? (j.avisados ? (j.avisosOk === j.avisados ? ` · aviso mandado a ${j.avisados} ${j.avisados === 1 ? 'celular' : 'celulares'}` : ` · el aviso falló (${(j.avisosError || [])[0] || 'error'})`) : ' · nadie tiene activados los avisos todavía') : ''), j.avisoHecho ? 5500 : 2600); await pedLoadRemote(); drawPedDet();
