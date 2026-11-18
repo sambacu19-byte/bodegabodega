@@ -585,6 +585,7 @@ body.ventas #locShare { display: none !important; }
         <div><h2 class="rec-title">Pedidos</h2><p id="pedInfo"></p><small class="soft pedcnt"></small></div>
         <div class="row"><button class="btn tape" id="pedNew" style="flex:none;height:44px" hidden>Nuevo pedido</button></div>
       </div>
+      <div class="dchips" id="pedTabs" style="margin:10px 0" hidden></div>
       <div id="pedList"></div>
     </div>
     <div id="pedDet" hidden>
@@ -941,8 +942,8 @@ body.ventas #locShare { display: none !important; }
 /* =====================================================================
    CONFIGURACIÓN: pega aquí la URL de tu Apps Script (termina en /exec)
    ===================================================================== */
-const API_URL = 'https://script.google.com/macros/s/AKfycbwi_yZcprNeb16Dr5-c5-CZwBNspitXrGv4E97Gc7IPkMgDm_w2qwPM1b2Qcmr1tgen/exec';
-const SERVER_MIN = 27;   // versión mínima de Code.gs que necesita esta web
+const API_URL = 'https://script.google.com/macros/s/AKfycbwEEzdA7KfafxrKdLcTOqZQup30BDuRiHmS82YkjcLm6B9KhfeeyAQbWlbgjn6SuuHv/exec';
+const SERVER_MIN = 28;   // versión mínima de Code.gs que necesita esta web
 // Sucursales: el "id" debe ser igual al de Code.gs. Cada una tiene SU PROPIA hoja de Google (su catálogo, fotos y ubicaciones).
 // embebido: true = usa el catálogo incluido abajo mientras descarga el de su hoja (solo sirve para una sucursal).
 const SUCURSALES = [
@@ -3666,7 +3667,7 @@ try { navigator.serviceWorker && navigator.serviceWorker.addEventListener('messa
 if (/[?&]ir=pedidos/.test(location.search)) window.addEventListener('load', () => { const t = setInterval(() => { if (SES && !document.body.classList.contains('locked')) { clearInterval(t); setView('ped'); } }, 400); setTimeout(() => clearInterval(t), 15000); });
 
 /* ---------- Pedidos ---------- */
-const PED = { list: [], sent: [], det: {}, cur: null, users: [], usersX: {} };
+const PED = { list: [], sent: [], det: {}, cur: null, users: [], usersX: {}, vista: 'local' };
 const pedKey = () => 'bodega_ped_' + SES.suc + '_' + (SES.usuario || '');
 function pedLoadCache() { try { const c = JSON.parse(localStorage.getItem(pedKey()) || '{}'); PED.list = c.list || []; PED.sent = c.sent || []; PED.det = c.det || {}; } catch (e) { PED.list = []; PED.sent = []; PED.det = {}; } PED.cur = null; PED.users = []; PED.usersX = {}; }
 function pedSaveCache() { try { localStorage.setItem(pedKey(), JSON.stringify({ list: PED.list, sent: PED.sent, det: PED.det })); } catch (e) {} }
@@ -3699,16 +3700,27 @@ function pedCard(p, enviado) {
   return `<button class="pcard" data-pid="${esc(p.id)}"${enviado ? ` data-psuc="${esc(p.suc)}"` : ''}><div><b>${esc(p.titulo)}</b>${p.estado === 'cerrado' ? ' <span class="tag">Cerrado</span>' : ''}${etq}<small>${!isNaN(d) ? fFecha(d) + ' · ' + fHora(d) + ' · ' : ''}${esc(p.creador)}${isAdmin() ? ' · Para: ' + esc(pedDestTxt(p.dest)) : ''}</small></div><div class="pprog"><div class="pbar"><i style="width:${pct}%"></i></div><small>${p.hechos} de ${p.total} hechos</small></div></button>`;
 }
 function drawPedList() {
-  $('#pedInfo').textContent = isAdmin() ? 'Crea un pedido y envíalo a todos los auxiliares o solo a algunos' + (enviarA().length ? ', o mándalo a otra sucursal.' : '.') : 'Los pedidos que te manda el administrador. Marca cada producto cuando lo tengas.';
-  const sent = isAdmin() ? (PED.sent || []) : [];
-  $('#pedList').innerHTML = (PED.list.length ? PED.list.map(p => pedCard(p, false)).join('') : (sent.length ? '' : `<div class="empty-state"><h2>Aún no hay pedidos</h2><p>${isAdmin() ? 'Toca «Nuevo pedido» para crear el primero.' : 'Cuando el administrador te mande uno, aparecerá aquí.'}</p></div>`))
-    + (sent.length ? '<div class="psec">Enviados a otra sucursal</div>' + sent.map(p => pedCard(p, true)).join('') : '');
+  const adm = isAdmin(), ens = enviarA().length;
+  const loc = PED.list.filter(p => !p.origen || p.origen === SES.suc), rec = PED.list.filter(p => p.origen && p.origen !== SES.suc), sent = adm ? (PED.sent || []) : [];
+  const hayRec = rec.length > 0 || ens > 0, hayEnv = adm && (sent.length > 0 || ens > 0);
+  if (PED.vista === 'rec' && !hayRec) PED.vista = 'local';
+  if (PED.vista === 'env' && !hayEnv) PED.vista = 'local';
+  const tabs = $('#pedTabs'); tabs.hidden = !(hayRec || hayEnv);
+  tabs.innerHTML = `<button class="seg-b" data-pv="local" aria-pressed="${PED.vista === 'local'}">Esta sucursal${loc.length ? ' (' + loc.length + ')' : ''}</button>` +
+    (hayRec ? `<button class="seg-b" data-pv="rec" aria-pressed="${PED.vista === 'rec'}">De otra sucursal${rec.length ? ' (' + rec.length + ')' : ''}</button>` : '') +
+    (hayEnv ? `<button class="seg-b" data-pv="env" aria-pressed="${PED.vista === 'env'}">Enviados${sent.length ? ' (' + sent.length + ')' : ''}</button>` : '');
+  $('#pedInfo').textContent = PED.vista === 'rec' ? 'Pedidos que te mandó otra sucursal. Las ubicaciones son las de tu sucursal.' : PED.vista === 'env' ? 'Pedidos que mandaste a otra sucursal. Aquí ves qué ya sacaron.' :
+    (adm ? 'Crea un pedido y envíalo a todos los auxiliares o solo a algunos' + (ens ? ', o mándalo a otra sucursal.' : '.') : 'Los pedidos que te manda el administrador. Marca cada producto cuando lo tengas.');
+  const lista = PED.vista === 'rec' ? rec : PED.vista === 'env' ? sent : loc, env = PED.vista === 'env';
+  $('#pedList').innerHTML = lista.length ? lista.map(p => pedCard(p, env)).join('')
+    : `<div class="empty-state"><h2>${env ? 'No has enviado pedidos a otra sucursal' : PED.vista === 'rec' ? 'No te han mandado pedidos de otra sucursal' : 'Aún no hay pedidos'}</h2><p>${env ? 'Toca «Nuevo pedido» y elige «Mandar a» otra sucursal.' : PED.vista === 'rec' ? 'Cuando otra sucursal te mande uno, aparecerá aquí.' : (adm ? 'Toca «Nuevo pedido» para crear el primero.' : 'Cuando el administrador te mande uno, aparecerá aquí.')}</p></div>`;
 }
+$('#pedTabs').addEventListener('click', e => { const b = e.target.closest('[data-pv]'); if (!b) return; PED.vista = b.dataset.pv; drawPedList(); });
 $('#pedList').addEventListener('click', e => { const b = e.target.closest('[data-pid]'); if (b) openPed(b.dataset.pid, b.dataset.psuc || ''); });
 async function openPed(id, suc) {
   let det = PED.det[id];
   if (navigator.onLine !== false) {
-    try { const j = await apiGet({ action: 'pedido_get', id, destSuc: suc || undefined }); if (j.ok) { det = PED.det[id] = j; pedSaveCache(); } else if (!det) throw new Error(j.error || 'Error'); }
+    try { const j = await apiGet({ action: 'pedido_get', id, destSuc: suc || undefined, ubic: true }); if (j.ok) { det = PED.det[id] = j; pedSaveCache(); } else if (!det) throw new Error(j.error || 'Error'); }
     catch (e) { if (!det) { toast('No se pudo abrir: ' + e.message, 4000); return; } }
   }
   if (!det) { toast('Este pedido necesita internet la primera vez', 4000); return; }
@@ -3736,10 +3748,24 @@ $('#pedBack').addEventListener('click', () => {
   showPedList(); drawPedList();
 });
 $('#pedX').addEventListener('click', () => $('#pedBack').click());
+// Ubicaciones y nombre que se muestran: las de la sucursal que SACA las piezas (la que recibe el pedido).
+// El remitente ve las de la otra sucursal (vienen del servidor); el que recibe, las de su propio catálogo.
+function pedUbs(p, x) {
+  const del = (x.ub || []).map(a => ({ u: a[0], t: a[1], q: a[2] }));
+  if (p.destSuc) return del;
+  const it = CODEMAP_get(x.c);
+  return it && it.ubs && it.ubs.length ? it.ubs : del;
+}
+function pedNombre(p, x) {
+  const it = CODEMAP_get(x.c);
+  if (p.destSuc) return x.dd || x.d || x.c;
+  if (p.origen && p.origen !== SES.suc) return (it && it.d) || x.dd || x.d || x.c;
+  return x.d || (it ? it.d : x.c);
+}
 function pedDoc() {
   const p = PED.cur, f = new Date(), pz = p.items.length;
   return { title: p.titulo || 'Pedido', sub: `${sucInfo(SES.suc).nombre}${p.destSuc ? ' → ' + sucInfo(p.destSuc).nombre : ''} · ${pz} ${pz === 1 ? 'producto' : 'productos'} · ${fFecha(f)} ${fHora(f)}${p.nota ? ' · ' + p.nota : ''}`,
-    rows: pedSorted(p.items).map(x => { const it = CODEMAP_get(x.c); return { t: x.d || (it ? it.d : x.c), s: x.c + (it && it.u ? ' · ' + it.u : ''), q: x.q != null ? x.q : null, col: x.col || '', h: !!x.h }; }) };
+    rows: pedSorted(p.items).map(x => { const L = pedUbs(p, x), u = L.length ? L[L.length - 1].u : ''; return { t: pedNombre(p, x), s: x.c + (u ? ' · ' + u : ''), q: x.q != null ? x.q : null, col: x.col || '', h: !!x.h }; }) };
 }
 function drawPedDet() {
   const p = PED.cur; if (!p) return; const adm = isAdmin();
@@ -3758,10 +3784,10 @@ function drawPedDet() {
   const s = p.items, hechos = s.filter(x => x.h).length, pct = s.length ? Math.round(hechos * 100 / s.length) : 0;
   $('#pedProg').innerHTML = `<div class="pbar big"><i style="width:${pct}%"></i></div><small class="soft">${hechos} de ${s.length} hechos${p.estado === 'cerrado' ? ' · Pedido cerrado' : ''}</small>`;
   $('#pedItems').innerHTML = s.length ? '<div class="mbox">' + pedSorted(s).map(x => {
-    const it = CODEMAP_get(x.c), bins = it && it.ubs && it.ubs.length ? it.ubs.slice().reverse().slice(0, 2).map((b, k) => `<span class="bin${k ? ' old' : ''}">${esc(b.u)}${qTag(b)}</span>`).join('') : '<span class="bin none">Sin ubicación</span>';
+    const it = CODEMAP_get(x.c), L = pedUbs(p, x), ult = L.length ? L[L.length - 1].u : '', bins = L.length ? L.slice().reverse().slice(0, 2).map((b, k) => `<span class="bin${k ? ' old' : ''}">${esc(b.u)}${qTag(b)}</span>`).join('') : '<span class="bin none">Sin ubicación</span>';
     const chk = adm ? `<input type="checkbox" data-sel="${esc(x.c)}" ${x.sel ? 'checked' : ''} aria-label="Marcar ${esc(x.d)}">` : `<input type="checkbox" data-hecho="${esc(x.c)}" ${x.h ? 'checked' : ''} aria-label="Hecho: ${esc(x.d)}">`;
     const qty = adm ? `<input class="qin" type="number" inputmode="numeric" min="0" max="999999" data-pq="${esc(x.c)}" value="${x.q != null ? x.q : ''}" placeholder="Cant." aria-label="Cantidad pedida">` : (x.q != null ? `<span class="pqty">${x.q} PCS</span>` : '');
-    return `<div class="pit${x.col ? ' c-' + x.col : ''}${x.h ? ' hecho' : ''}"><label class="pchk">${chk}</label><div class="pmain"><b>${esc(x.d || (it ? it.d : x.c))}</b><small>${esc(x.c)}${x.col ? ` · <em>${esc(PCOL[x.col])}</em>` : ''}${x.h ? ` · hecho${x.hp ? ' por ' + esc(x.hp) : ''}` : ''}</small><div class="bins">${bins}${it && it.u ? `${cpBtn(it.u, 'pd|' + p.id + '|' + x.c)}` : ''}</div></div>${qty}</div>`;
+    return `<div class="pit${x.col ? ' c-' + x.col : ''}${x.h ? ' hecho' : ''}"><label class="pchk">${chk}</label><div class="pmain"><b>${esc(pedNombre(p, x))}</b><small>${esc(x.c)}${x.col ? ` · <em>${esc(PCOL[x.col])}</em>` : ''}${x.h ? ` · hecho${x.hp ? ' por ' + esc(x.hp) : ''}` : ''}</small><div class="bins">${bins}${ult ? `${cpBtn(ult, 'pd|' + p.id + '|' + x.c)}` : ''}</div></div>${qty}</div>`;
   }).join('') + '</div>' : '<div class="empty-state"><h2>Pedido vacío</h2><p>Busca productos arriba para agregarlos.</p></div>';
   $('#pedSave').hidden = !adm; $('#pedSave').textContent = p.isNew ? 'Enviar pedido' : 'Guardar cambios';
   $('#pedClose').hidden = !adm || p.isNew; $('#pedClose').textContent = p.estado === 'cerrado' ? 'Reabrir pedido' : 'Cerrar pedido';
@@ -3848,7 +3874,7 @@ async function pedSend(estadoNuevo) {
   try {
     const j = await apiReintenta('pedido_guardar', { destSuc: p.destSuc || undefined, id: p.id, titulo: p.titulo, nota: p.nota, dest: p.dest, estado: est, items: p.items.map(x => ({ c: x.c, d: x.d, q: x.q, col: x.col || '' })) });
     if (!j.ok) throw new Error(j.error || 'Error');
-    p.estado = est; p.isNew = false; p.dirty = false; if (p.destSuc) pedLoadRemote();
+    p.estado = est; const eraNuevo = p.isNew; p.isNew = false; p.dirty = false; if (p.destSuc) { PED.vista = 'env'; pedLoadRemote(); } else if (eraNuevo) PED.vista = 'local';
     PED.det[p.id] = JSON.parse(JSON.stringify({ ...p, items: p.items.map(({ sel, ...r }) => r) })); pedSaveCache();
     toast(estadoNuevo ? (est === 'cerrado' ? 'Pedido cerrado' : 'Pedido reabierto') : 'Pedido enviado' + (p.destSuc ? ' a ' + sucInfo(p.destSuc).nombre : '') + (j.avisoHecho ? (j.avisados ? (j.avisosOk === j.avisados ? ` · aviso mandado a ${j.avisados} ${j.avisados === 1 ? 'celular' : 'celulares'}` : ` · el aviso falló (${(j.avisosError || [])[0] || 'error'})`) : ' · nadie tiene activados los avisos todavía') : ''), j.avisoHecho ? 5500 : 2600); await pedLoadRemote(); drawPedDet();
   } catch (e) { toast('No se pudo enviar: ' + e.message + ' · toca Enviar otra vez', 4500); }
@@ -3889,16 +3915,17 @@ function pedCntTxt(t) { document.querySelectorAll('.pedcnt').forEach(e => { e.te
 async function pedLive() {
   const p = PED.cur;
   if (p && !p.isNew && navigator.onLine !== false) {
-    const j = await apiGet({ action: 'pedido_get', id: p.id, destSuc: p.destSuc || undefined });
+    p.liveN = (p.liveN || 0) + 1;
+    const j = await apiGet({ action: 'pedido_get', id: p.id, destSuc: p.destSuc || undefined, ubic: p.liveN % 4 === 0 || undefined });
     if (!j.ok || PED.cur !== p) return;
     const now = Date.now();
     const editando = isAdmin() && (p.dirty || p.items.some(x => x.sel));
     if (!editando) {
       const sel = {}; p.items.forEach(x => { sel[x.c] = x; });
-      const nuevos = j.items.map(r => { const o = sel[r.c]; if (o && o.tl && now - o.tl < 8000) return { ...r, h: o.h, hp: o.hp, ht: o.ht, tl: o.tl, sel: false }; return { ...r, sel: false }; });
+      const nuevos = j.items.map(r => { const o = sel[r.c]; const ex = o ? { ub: r.ub || o.ub, dd: r.dd || o.dd } : {}; if (o && o.tl && now - o.tl < 8000) return { ...r, ...ex, h: o.h, hp: o.hp, ht: o.ht, tl: o.tl, sel: false }; return { ...r, ...ex, sel: false }; });
       p.items = nuevos; p.titulo = j.titulo; p.nota = j.nota; p.dest = j.dest; p.estado = j.estado;
     } else {
-      p.items.forEach(x => { const r = j.items.find(y => y.c === x.c); if (r && !(x.tl && now - x.tl < 8000)) { x.h = r.h; x.hp = r.hp; x.ht = r.ht; } });
+      p.items.forEach(x => { const r = j.items.find(y => y.c === x.c); if (r) { if (r.ub) { x.ub = r.ub; x.dd = r.dd; } if (!(x.tl && now - x.tl < 8000)) { x.h = r.h; x.hp = r.hp; x.ht = r.ht; } } });
     }
     PED.det[p.id] = JSON.parse(JSON.stringify({ ...p, items: p.items.map(({ sel, tl, ...r }) => r) })); pedSaveCache();
     const a = document.activeElement;
