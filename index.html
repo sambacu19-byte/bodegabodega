@@ -452,22 +452,21 @@ body{overflow-x:hidden}
   #printArea,#printArea *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
   #printArea.mue{font-size:9pt;font-family:Cambria,'Times New Roman',Georgia,serif;color:#000}
   #printArea.mue *{font-family:Cambria,'Times New Roman',Georgia,serif!important}
-  #printArea.mue .mh{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;border-bottom:3px solid #000;padding-bottom:6px;margin-bottom:8px}
+  #printArea.mue .mh{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;border-bottom:1px solid #000;padding-bottom:6px;margin-bottom:8px}
   #printArea.mue h1{font-size:18pt;margin:0 0 2px;color:#000}
   #printArea.mue .mm{margin:0;color:#000;font-size:9pt;line-height:1.45}
   #printArea.mue .mst{display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end;max-width:46%}
   #printArea.mue .mst span{border:1px solid #000;background:#fff;color:#000;border-radius:99px;padding:2px 8px;font-weight:700;font-size:8pt;white-space:nowrap}
   #printArea.mue table.mt{width:100%;border-collapse:collapse;table-layout:fixed}
   #printArea.mue table.mt thead{display:table-header-group}
-  #printArea.mue table.mt th{background:#000;color:#fff;font-size:8.5pt;text-align:center;padding:5px 4px;border:1px solid #000;letter-spacing:.02em}
+  #printArea.mue table.mt th{background:#fff;color:#000;font-size:8.5pt;text-align:center;padding:5px 4px;border:1px solid #000;letter-spacing:.02em}
   #printArea.mue table.mt td{padding:3.5px 5px;border:1px solid #000;vertical-align:middle;font-size:9pt;height:7.5mm;background:#fff}
-  #printArea.mue table.mt tbody tr:nth-child(even) td{background:#f0f0f0}
-  #printArea.mue table.mt tr{break-inside:avoid;page-break-inside:avoid}
+    #printArea.mue table.mt tr{break-inside:avoid;page-break-inside:avoid}
   #printArea.mue td.n,#printArea.mue td.c,#printArea.mue td.f{text-align:center}
   #printArea.mue td.cod{font-size:8.5pt;word-break:break-all}
   #printArea.mue td.q,#printArea.mue td.d{text-align:center;font-weight:700}
   #printArea.mue table.mt tfoot{display:table-row-group}
-  #printArea.mue tfoot td{background:#d9d9d9!important;font-weight:700;border-top:2px solid #000}
+  #printArea.mue tfoot td{font-weight:700}
   #printArea.mue .mfoot{margin-top:8px;color:#000;font-size:8pt;text-align:right}
 }
 body.ventas nav.tabs, body.ventas #adminBtn, body.ventas .locwrap, body.ventas .bin, body.ventas #vLoc, body.ventas #vLocEdit, body.ventas #vDel, body.ventas #cpClear { display: none !important; }
@@ -527,7 +526,6 @@ body.ventas #locShare { display: none !important; }
     <div class="rec-head">
       <div>
         <h2 class="rec-title">Tomar ubicaciones</h2>
-        <p>Define la ubicación, escanea o busca los productos, revisa la lista y guarda.</p>
       </div>
     </div>
     <div class="ubi-box">
@@ -567,7 +565,6 @@ body.ventas #locShare { display: none !important; }
       <div class="rec-head">
         <div>
           <h2 class="rec-title">Muestreos</h2>
-          <p>Cuenta una categoría y guarda tu avance. También funciona sin internet.</p>
           <small class="soft pedcnt"></small>
         </div>
         <div class="row">
@@ -668,7 +665,6 @@ body.ventas #locShare { display: none !important; }
 <dialog id="mueNewDlg" aria-label="Iniciar muestreo">
   <div class="pin-box wide">
     <h2>Iniciar muestreo</h2>
-    <p class="soft">Elige qué vas a contar: una categoría de la lista, o escribe lo que buscas.</p>
     <input class="sm" id="mnFind" placeholder="Buscar categoría… (farol, bracket, parrilla)" autocomplete="off" aria-label="Buscar categoría">
     <div class="catpick" id="mnCats"></div>
     <input class="sm" id="mnQ" placeholder="Opcional: filtrar por nombre, vehículo o año (ej: hilux 2018)" autocomplete="off" aria-label="Filtro opcional">
@@ -693,7 +689,6 @@ body.ventas #locShare { display: none !important; }
     <h2>Administración</h2>
     <div class="seg" id="admTabs" role="group" aria-label="Sección"></div>
     <div id="admUsr">
-      <p class="soft">Los auxiliares son distintos en cada sucursal y entran sin clave: eligen su nombre en la pantalla de entrada. Si desactivas a uno, ya no aparece en la lista.</p>
       <div class="seg" id="admSuc" role="group" aria-label="Sucursal"></div>
       <div id="admList"></div>
       <div class="admform">
@@ -706,8 +701,6 @@ body.ventas #locShare { display: none !important; }
       </div>
     </div>
     <div id="admDrv" hidden>
-      <p class="soft">Las fotos se guardan en Drive así: <b>Modelo / Modelo y años / Pieza</b> (ej: Civic / Civic 2016-2018 / Farol) y cada foto se llama como su código.</p>
-      <p class="soft">¿Subes fotos a mano a Drive? Ponle al archivo el código del producto al inicio del nombre (ej: CAP-FDES08-002548N.jpg o CAP-FDES08-002548N_2.jpg) y guárdala en la carpeta de la sucursal o en cualquiera de sus subcarpetas. La web las encuentra sola; aquí puedes buscarlas ya.</p>
       <select class="sel" id="drvDias" aria-label="Desde cuándo buscar" style="width:100%;margin-top:6px">
         <option value="">Solo lo nuevo desde la última vez</option>
         <option value="7">Fotos de los últimos 7 días</option>
@@ -719,7 +712,7 @@ body.ventas #locShare { display: none !important; }
       <div class="row"><button class="btn" id="drvRep">Quitar fotos repetidas (misma imagen en el mismo producto)</button></div>
       <div class="soft" id="drvMsg" aria-live="polite" style="min-height:22px;margin-top:10px"></div>
       <hr style="border:0;border-top:1px solid var(--line,#3a3355);margin:14px 0">
-      <p class="soft"><b>Subir fotos desde mi computadora o teléfono</b><br>Elige varias fotos a la vez. Cada foto se asocia al producto por el nombre del archivo: el <b>código</b> (ej: CAP-FDES08-002548N.jpg) o la <b>descripción</b> del producto. Las que no se reconozcan las asignas tú.</p>
+      <p class="soft"><b>Subir fotos desde mi computadora o teléfono</b><br>El nombre del archivo debe llevar el código o la descripción del producto.</p>
       <label class="btn" for="pcFiles" style="display:flex;justify-content:center;cursor:pointer">Elegir fotos…</label>
       <input type="file" id="pcFiles" accept="image/*" multiple hidden>
       <div id="pcList" style="margin-top:8px"></div>
@@ -728,7 +721,7 @@ body.ventas #locShare { display: none !important; }
       <div class="soft" id="pcMsg" aria-live="polite" style="min-height:22px;margin-top:8px;overflow-wrap:anywhere"></div>
     </div>
     <div id="admImp" hidden>
-      <p class="soft">Sube un Excel con productos nuevos (código, descripción, unidad de medida y, si la tienes, ubicación). Solo se agregan los que <b>no existan</b> en la sucursal elegida; los demás se ignoran. El archivo se lee aquí en tu teléfono o computadora y <b>no se guarda</b>: solo se guardan los productos nuevos.</p>
+      <p class="soft">Excel con código, descripción, unidad y ubicación. Solo se agregan los productos que no existen.</p>
       <select class="sel" id="impSuc" aria-label="Sucursal a actualizar" style="width:100%"></select>
       <label class="btn" for="impFile" style="display:flex;justify-content:center;margin-top:10px;cursor:pointer">Elegir archivo Excel (.xlsx) o CSV</label>
       <input type="file" id="impFile" accept=".xlsx,.xls,.csv,text/csv" hidden>
@@ -736,7 +729,7 @@ body.ventas #locShare { display: none !important; }
       <div class="row"><button class="btn tape" id="impGo" hidden>Agregar productos nuevos</button></div>
     </div>
     <div id="admMov" hidden>
-      <p class="soft" id="admMovTxt">Copia las fotos (y, si quieres, los productos nuevos) de una sucursal a la otra. Puedes repetirlo cuando agregues productos: solo pasa lo que falta, nunca duplica.</p>
+      <p class="soft" id="admMovTxt">Copia fotos y productos de una sucursal a la otra. Solo pasa lo que falta.</p>
       <div class="row" style="align-items:center">
         <select class="sel" id="admO" aria-label="Desde"></select>
         <button class="btn" id="admSwap" style="flex:none;height:42px;padding:0 14px" aria-label="Intercambiar">⇄</button>
@@ -848,7 +841,6 @@ body.ventas #locShare { display: none !important; }
     <p id="qtySub" style="color:var(--mute);font-size:15px"></p>
     <div class="qrow"><button class="btn" id="qtyMinus" style="flex:none;width:52px" aria-label="Menos">−</button><input id="qtyIn" type="number" inputmode="numeric" min="0" max="999999" placeholder="Cantidad" aria-label="Cantidad" style="flex:1;min-width:0"><button class="btn" id="qtyPlus" style="flex:none;width:52px" aria-label="Más">+</button></div>
     <div id="qtyLocs" hidden>
-      <p class="soft" id="qtyHint" style="font-size:13px;margin:0 0 6px">Ubicaciones y cuántas hay en cada una. El total se suma solo.</p>
       <ul class="loclist" id="qtyLocList" style="max-height:min(28dvh,220px)"></ul>
       <div class="qrow" style="margin-top:8px"><input id="qtyLocIn" maxlength="40" autocomplete="off" placeholder="Nueva ubicación, ej: 3B2" style="flex:1 1 100%;min-width:0;letter-spacing:.05em;text-transform:uppercase;font-size:16px" aria-label="Nueva ubicación"><input id="qtyLocQ" class="qin" type="number" inputmode="numeric" min="0" max="999999" placeholder="Cant." aria-label="Cantidad en la nueva ubicación" style="width:96px;flex:none;letter-spacing:normal"><button class="btn" id="qtyLocAdd" style="flex:1;height:38px;padding:0 14px">Agregar ubicación</button></div>
     </div>
@@ -862,7 +854,6 @@ body.ventas #locShare { display: none !important; }
 <dialog id="dteDlg" aria-label="Factura DTE">
   <div class="pin-box wide" style="max-height:calc(100dvh - 24px);overflow-y:auto">
     <h2>Factura DTE</h2>
-    <p class="soft">Sube la factura (PDF o JSON). La app lee los productos y te muestra dónde guardarlos. El archivo no se guarda en ningún lado.</p>
     <input style="letter-spacing:normal;text-transform:none;font-size:14px" id="dteFile" type="file" accept=".pdf,application/pdf,.json,application/json" aria-label="Archivo de la factura">
     <div id="dteMsg" aria-live="polite" style="color:var(--mute);font-size:14px;flex:none"></div>
     <div id="dteList" style="flex:none"></div>
@@ -878,7 +869,6 @@ body.ventas #locShare { display: none !important; }
 <dialog id="xlsDlg" aria-label="Excel de pedido">
   <div class="pin-box wide" style="max-height:calc(100dvh - 24px);overflow-y:auto">
     <h2>Excel de pedido</h2>
-    <p class="soft">Sube el Excel del pedido. La app lee los productos y te devuelve el mismo Excel con una columna de <b>ubicaciones</b> de la sucursal que saca las piezas. El archivo no se guarda en ningún lado.</p>
     <input style="letter-spacing:normal;text-transform:none;font-size:14px" id="xlsFile" type="file" accept=".xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" aria-label="Excel del pedido">
     <div id="xlsMsg" aria-live="polite" style="color:var(--mute);font-size:14px;flex:none"></div>
     <div id="xlsSuc" class="dchips" style="flex:none" hidden></div>
@@ -894,7 +884,6 @@ body.ventas #locShare { display: none !important; }
 <dialog id="stkDlg" aria-label="Existencias del sistema">
   <div class="pin-box wide" style="max-height:calc(100dvh - 24px);overflow-y:auto">
     <h2>Existencias del sistema</h2>
-    <p class="soft">Sube el Excel de tu sistema con <b>CODIGO</b>, <b>DESCRIPCION</b> y <b>CANTIDAD</b> (también sirve EXISTENCIA, STOCK o SALDO). Puede tener la misma estructura del Excel de «Subir productos»: de él solo se toman las <b>cantidades</b>. Reemplaza al anterior: puedes subir uno nuevo cada día. Los productos que tu empresa omita en el Excel <b>siguen apareciendo en los muestreos</b> (porque están en tu catálogo), marcados como «No venía en el Excel del sistema».</p>
     <div id="stkInfo" style="font-size:14px;flex:none"></div>
     <input style="letter-spacing:normal;text-transform:none;font-size:14px" id="stkFile" type="file" accept=".xlsx,.xls,.csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" aria-label="Excel de existencias">
     <div id="stkMsg" aria-live="polite" style="color:var(--mute);font-size:14px;flex:none"></div>
@@ -1474,11 +1463,10 @@ function refresh() {
   $('#clear').hidden = !state.q;
   renderMore(true);
   if (!IDX.length) {
-    $('#did').innerHTML = '<div class="empty-state"><h2>Cargando el catálogo…</h2><p>Un momento: se está descargando la lista de productos de esta sucursal.</p></div>';
+    $('#did').innerHTML = '<div class="empty-state"><h2>Cargando el catálogo…</h2></div>';
   } else if (!LIST.length) {
     const alt = QT.length ? didYouMean(QT) : null;
     $('#did').innerHTML = `<div class="empty-state"><h2>No encontramos ese producto</h2>
-      <p>Prueba con menos palabras, o con el año del vehículo.</p>
       ${alt ? `<p style="margin-top:14px"><button class="chip" data-fix="${esc(alt)}">¿Quisiste decir «${esc(alt)}»?</button></p>` : ''}</div>`;
   } else $('#did').innerHTML = LOCQ ? locBarHTML() : '';
 }
@@ -1948,7 +1936,7 @@ function drawRecTools() {
 async function loadRecent(force) {
   const box = $('#recList');
   drawRecTools();
-  if (!API_URL) { box.innerHTML = '<div class="empty-state"><h2>Falta conectar la nube</h2><p>Pega tu URL en API_URL para ver el historial.</p></div>'; return; }
+  if (!API_URL) { box.innerHTML = '<div class="empty-state"><h2>Falta conectar la nube</h2></div>'; return; }
   if (!RECENT) box.innerHTML = '<div class="empty-state"><p>Cargando…</p></div>';
   const tok = ++REC.loading;
   try {
@@ -2012,8 +2000,8 @@ function renderRecent(failed) {
   RECROWS = pend.concat(failed ? [] : (RECENT || []));
   if (!RECROWS.length) {
     box.innerHTML = failed
-      ? '<div class="empty-state"><h2>Sin conexión</h2><p>No se pudo cargar el historial. Cuando haya internet toca «Actualizar».</p></div>'
-      : '<div class="empty-state"><h2>Aún no hay movimientos</h2><p>Cuando agregues o quites una ubicación aparecerá aquí con su fecha, hora y quién la hizo.</p></div>';
+      ? '<div class="empty-state"><h2>Sin conexión</h2></div>'
+      : '<div class="empty-state"><h2>Aún no hay movimientos</h2></div>';
     return;
   }
   let html = '<div class="ledger"><div class="lhead" style="display:block;padding:11px 18px">' + (failed ? 'Sin conexión: solo se muestran los cambios que aún no se envían' : 'Del más reciente al más antiguo') + '</div>';
@@ -2371,7 +2359,7 @@ function onScan(text) {
   $('#q').value = v; state.q = v; refresh();
   const it = CODEMAP_get(v);
   if (it && isVentas()) toast('Código leído: ' + v, 3200);
-  else if (it) { toast('Escaneado: ' + v + ' · solo se consultó, no se cambió nada', 3800); apiQ('escaneo', { codigo: it.c, descripcion: it.d }).catch(() => {}); }
+  else if (it) { toast('Escaneado: ' + v, 3800); apiQ('escaneo', { codigo: it.c, descripcion: it.d }).catch(() => {}); }
   else toast('Código leído: ' + v, 3200);
 }
 function stopScanCam() {
@@ -2581,7 +2569,7 @@ function shareHTML(loc, otros) {
 }
 // Aviso completo al agregar una ubicación: si este mismo producto ya la tenía y qué otros productos hay ahí
 function locAviso(loc, otros, yaTenia) {
-  return (yaTenia ? `<div><b>⚠ Este producto ya tenía la ubicación ${esc(loc)}.</b> No se duplicó: solo se actualizó (queda como la última).</div>` : '') + shareHTML(loc, otros);
+  return (yaTenia ? `<div><b>Este producto ya tenía la ubicación ${esc(loc)}</b></div>` : '') + shareHTML(loc, otros);
 }
 const locCount = loc => (locIdx().get(loc) || []).length;
 const pendCount = loc => UBI.rows.filter(r => r.st === 'pend' && (!loc || r.loc === loc)).length;
@@ -2654,7 +2642,7 @@ function renderUbi() {
       return `<div class="ubrow${cls}"><div><b>${esc(r.it ? r.it.d : r.text)}</b><small>${esc(r.it ? r.it.c : '')}</small></div><div class="ubst">${st}</div></div>`;
     }).join('');
   }
-  $('#ubList').innerHTML = h || '<div class="empty-state"><p>Escanea o busca productos: aparecerán aquí para revisarlos antes de guardar.</p></div>';
+  $('#ubList').innerHTML = h || '<div class="empty-state"><p>Escanea o busca productos</p></div>';
   drawUbiHas();
 }
 
@@ -2781,7 +2769,7 @@ function setLocFromString(k) {   // "1B4-C2" -> ubicación 1B4 con caja 2
 function renderLocPanel() {
   const m = locIdx(), keys = [...m.keys()].sort(cmpNat);
   $('#ubLocsHead').textContent = plural(keys.length, 'ubicación', 'ubicaciones');
-  if (!keys.length) { $('#ubLocsList').innerHTML = '<div class="empty-state"><p>Todavía no hay ubicaciones con productos en esta sucursal.</p></div>'; return; }
+  if (!keys.length) { $('#ubLocsList').innerHTML = '<div class="empty-state"><p>No hay ubicaciones con productos</p></div>'; return; }
   $('#ubLocsList').innerHTML = keys.slice(0, UBI.locShow).map(k => {
     const arr = m.get(k), open = UBI.open.has(k);
     return `<div class="locrow"><div class="lr-top"><span class="bin">${esc(k)}</span><span class="cntbadge" title="Productos en esta ubicación">${arr.length}</span><span class="grow"></span>` +
@@ -3048,8 +3036,8 @@ function drawMueList() {
       <span class="tag ${r.estado === 'cerrado' ? 'good' : 'warn'}">${r.estado === 'cerrado' ? 'Cerrado' : 'Abierto'}</span>
       ${puedeBorrar ? `<button class="mini del" data-mdel="${esc(r.id)}" aria-label="Borrar este muestreo">Borrar</button>` : ''}</div>`;
   }).join('') : (hist
-    ? `<div class="empty-state"><h2>${MUE.histLoaded ? 'No hay muestreos en el historial' : 'Cargando el historial…'}</h2><p>Los muestreos que cierres quedan guardados aquí para consultarlos, imprimirlos o bajarlos en Excel.</p></div>`
-    : '<div class="empty-state"><h2>Aún no hay muestreos</h2><p>Toca «Iniciar muestreo», elige una categoría (faroles, brackets…) y empieza a contar. Los que cierres pasan al «Historial».</p></div>');
+    ? `<div class="empty-state"><h2>${MUE.histLoaded ? 'No hay muestreos en el historial' : 'Cargando el historial…'}</h2></div>`
+    : '<div class="empty-state"><h2>Aún no hay muestreos</h2></div>');
 }
 $('#mueTabs').addEventListener('click', e => { const b = e.target.closest('[data-mt]'); if (!b) return; MUE.tab = b.dataset.mt; drawMueList(); if (MUE.tab === 'hist' && !MUE.histLoaded) mueLoadHist(); });
 $('#mueQ').addEventListener('input', e => { MUE.q = e.target.value; drawMueList(); $('#mueQ').focus(); });
@@ -3141,9 +3129,9 @@ function drawMueStk(m) {
   if (m.sf || m.items.some(x => x.sf)) {
     let falta = 0, viejos = 0; m.items.forEach(x => { if (x.e !== 'ok' && x.s > 0) falta += x.s; if ((x.sf || m.sf || 0) < STK.t) viejos++; });
     const ult = Math.max(m.sf || 0, ...m.items.map(x => x.sf || 0));
-    t = `<span>Existencias del sistema al <b>${esc(stkCuando(ult))}</b>` + (falta ? ` · por buscar según el sistema: <b>${falta} PCS</b>` : '') + '</span>';
-    t += viejos ? `<button class="mini" id="stkApply">Actualizar también los ya contados (carga del ${esc(stkCorta(STK.t))})</button>` : `<button class="mini" id="stkApply">Revisar si hay nuevas</button>`;
-  } else t = `<span>Este muestreo no tiene existencias del sistema.</span><button class="mini" id="stkApply">Agregar existencias del ${esc(stkCuando(STK.t))}</button>`;
+    t = `<span>Sistema al <b>${esc(stkCuando(ult))}</b>` + (falta ? ` · por buscar: <b>${falta} PCS</b>` : '') + '</span>';
+    t += `<button class="mini" id="stkApply">Actualizar</button>`;
+  } else t = `<button class="mini" id="stkApply">Agregar existencias del sistema</button>`;
   box.innerHTML = t;
 }
 $('#mueStk').addEventListener('click', async e => {
@@ -3152,10 +3140,10 @@ $('#mueStk').addEventListener('click', async e => {
   const b = e.target.closest('#stkApply'); b.disabled = true; b.textContent = 'Buscando…';
   await stkRefresh();
   if (MUE.cur !== m) return;
-  if (!STK.t) { toast('Todavía no hay existencias cargadas. El administrador debe subir el Excel.', 4200); drawMueStk(m); return; }
-  if (m.items.every(x => (x.sf || m.sf || 0) >= STK.t)) { toast('Ya tienes las existencias más nuevas', 3000); drawMueStk(m); return; }
+  if (!STK.t) { toast('No hay existencias cargadas', 3000); drawMueStk(m); return; }
+  if (m.items.every(x => (x.sf || m.sf || 0) >= STK.t)) { toast('Ya están al día', 2200); drawMueStk(m); return; }
   m.items.forEach(x => { const q = stkQty(x.c); if (q !== null) { x.s = q; x.sf = STK.t; } }); m.sf = STK.t; mueTouch(m); drawMueDet();
-  toast('Existencias actualizadas al ' + stkCuando(STK.t), 3500);
+  toast('Existencias actualizadas', 2500);
 });
 function drawMueDet() {
   const m = MUE.cur; if (!m) return;
@@ -3175,7 +3163,7 @@ function drawMueDet() {
     const it = CODEMAP_get(x.c), ub = it && it.u ? it.u : x.u;
     const bins = it && it.ubs && it.ubs.length ? it.ubs.slice().reverse().slice(0, 3).map((b, k) => `<span class="lc"><span class="bin${k ? ' old' : ''}">${esc(b.u)}</span>${cpBtn(b.u, 'u|' + x.c + '|' + b.u, 'sm')}</span>`).join('') : '<span class="bin none">Sin ubicación</span>';
     const sfx = x.sf || m.sf || 0;
-    const sis = !sfx ? '' : x.s == null ? '<span class="tag">No venía en el Excel del sistema</span>' : `<span class="tag warn">En sistema: ${x.s} PCS al ${esc(stkCorta(sfx))}</span>`;
+    const sis = !sfx ? '' : x.s == null ? '<span class="tag">No está en el Excel</span>' : `<span class="tag warn">En sistema: ${x.s} PCS al ${esc(stkCorta(sfx))}</span>`;
     const dif = sfx && x.e === 'ok' && x.q != null && x.s != null ? (x.q === x.s ? '<span class="tag good">Cuadra</span>' : `<span class="tag bad">Diferencia ${x.q - x.s > 0 ? '+' : ''}${Math.round((x.q - x.s) * 100) / 100}</span>`) : '';
     const acts = x.e !== 'ok'
       ? `<button class="mb ok" data-mq="${esc(x.c)}">Poner cantidad</button><button class="mini" data-ml="${esc(x.c)}">Cambiar ubicación</button>`
@@ -3233,7 +3221,7 @@ $('#mueClose').addEventListener('click', () => {
 function mueDoc(m) {
   const rows = m.items.map((x, i) => {
     const it = CODEMAP_get(x.c);
-    const ub = it && it.ubs && it.ubs.length ? it.ubs.slice().reverse().slice(0, 3).map(b => b.u + (b.q != null ? ' (' + b.q + ' PCS)' : '')).join(' / ') : (x.u || 'SIN UBICACIÓN');
+    const ub = it && it.ubs && it.ubs.length ? it.ubs.slice().reverse().slice(0, 3).map(b => b.u + (b.q != null ? ' (' + b.q + ' PCS)' : '')).join(' / ') : (x.u || '');
     const ok = x.e === 'ok', q = ok && x.q != null ? x.q : null, sv = x.s == null ? null : x.s;
     return { n: i + 1, c: x.c, d: it ? it.d : x.c, ub, s: sv, t: ok && x.t ? x.t : 0, ok, q, dif: q !== null && sv !== null ? Math.round((q - sv) * 100) / 100 : null };
   });
@@ -3256,12 +3244,12 @@ function mueImprimir(m) {
   let a = document.getElementById('printArea'); if (a) a.remove();
   a = document.createElement('div'); a.id = 'printArea'; a.className = 'mue';
   a.innerHTML = `<div class="mh"><div><h1>${esc(d.title)}</h1><p class="mm">${esc(d.l1)}<br>${esc(d.l2)}</p></div></div>
-    <table class="mt"><colgroup><col style="width:4%"><col style="width:17%"><col style="width:31%"><col style="width:15%"><col style="width:9%"><col style="width:11%"><col style="width:7%"><col style="width:6%"></colgroup>
-    <thead><tr><th>N°</th><th>CODIGO</th><th>DESCRIPCION</th><th>UBICACION</th><th>CANTIDAD SISTEMA</th><th>FECHA</th><th>CONTEO</th><th>DIF.</th></tr></thead><tbody>` +
-    d.rows.map(r => `<tr><td class="n">${r.n}</td><td class="cod">${esc(r.c)}</td><td>${esc(r.d)}</td><td>${esc(r.ub)}</td><td class="c">${r.s === null ? '' : r.s}</td><td class="f"></td>` +
+    <table class="mt"><colgroup><col style="width:19%"><col style="width:33%"><col style="width:16%"><col style="width:10%"><col style="width:11%"><col style="width:6%"><col style="width:5%"></colgroup>
+    <thead><tr><th>CODIGO</th><th>DESCRIPCION</th><th>UBICACION</th><th>CANTIDAD SISTEMA</th><th>FECHA</th><th>CONTEO</th><th>DIF.</th></tr></thead><tbody>` +
+    d.rows.map(r => `<tr><td class="cod">${esc(r.c)}</td><td>${esc(r.d)}</td><td>${esc(r.ub)}</td><td class="c">${r.s === null ? '' : r.s}</td><td class="f"></td>` +
       `<td class="q">${r.ok ? (r.q !== null ? r.q : '✓') : ''}</td>` +
       `<td class="d">${r.dif === null ? '' : (r.dif > 0 ? '+' : '') + r.dif}</td></tr>`).join('') +
-    `</tbody><tfoot><tr><td colspan="4" style="text-align:right">TOTAL</td><td class="c">${d.ult ? d.pzSis : ''}</td><td></td><td class="q">${d.pzCont}</td><td></td></tr></tfoot></table>
+    `</tbody><tfoot><tr><td colspan="3" style="text-align:right">TOTAL</td><td class="c">${d.ult ? d.pzSis : ''}</td><td></td><td class="q">${d.pzCont}</td><td></td></tr></tfoot></table>
     <div class="mfoot">Multipart Bodega · ${esc(d.title)} · impreso el ${esc(fCorta(d.f.getTime()))}</div>`;
   const stl = document.createElement('style'); stl.id = 'pgStyle'; stl.textContent = '@page{size:letter landscape;margin:9mm 10mm 12mm;@bottom-right{content:"Página " counter(page) " de " counter(pages);font:8pt Cambria,Georgia,serif;color:#000}}'; document.head.appendChild(stl);
   document.body.appendChild(a); document.body.classList.add('printing');
@@ -3282,37 +3270,36 @@ async function mueExcel(m) {
   try {
     const EJ = await loadExcelJS(), wb = new EJ.Workbook(); wb.creator = 'Multipart Bodega'; wb.created = new Date();
     const HR = 5, ws = wb.addWorksheet('Muestreo', { views: [{ state: 'frozen', ySplit: HR, showGridLines: false }] });
-    const COLS = ['N°', 'CODIGO', 'DESCRIPCION', 'UBICACION', 'CANTIDAD SISTEMA', 'FECHA', 'CONTEO', 'DIFERENCIA'], W = [6, 24, 54, 24, 14, 16, 12, 13];
-    const FN = 'Cambria', NEGRO = 'FF000000', BLANCO = 'FFFFFFFF', GRIS = 'FFF0F0F0', GRIS2 = 'FFD9D9D9', thin = { style: 'thin', color: { argb: NEGRO } };
+    const COLS = ['CODIGO', 'DESCRIPCION', 'UBICACION', 'CANTIDAD SISTEMA', 'FECHA', 'CONTEO', 'DIFERENCIA'], W = [24, 54, 24, 14, 16, 12, 13];
+    const FN = 'Cambria', thin = { style: 'thin', color: { argb: 'FF000000' } };
     ws.columns = W.map(w => ({ width: w }));
-    const box = { top: thin, left: thin, bottom: thin, right: thin }, fill = argb => ({ type: 'pattern', pattern: 'solid', fgColor: { argb } });
-    // Encabezado del documento (blanco y negro)
-    ws.mergeCells('A1:H1'); const c1 = ws.getCell('A1'); c1.value = d.title; c1.font = { name: FN, size: 18, bold: true, color: { argb: BLANCO } }; c1.fill = fill(NEGRO); c1.alignment = { vertical: 'middle', indent: 1 }; ws.getRow(1).height = 32;
-    [[2, d.l1], [3, d.l2]].forEach(([r, t]) => { ws.mergeCells(`A${r}:H${r}`); const c = ws.getCell(`A${r}`); c.value = t; c.font = { name: FN, size: 11, color: { argb: NEGRO } }; c.alignment = { vertical: 'middle', indent: 1 }; ws.getRow(r).height = 19; });
+    const box = { top: thin, left: thin, bottom: thin, right: thin };
+    // Encabezado del documento: solo texto
+    ws.mergeCells('A1:G1'); const c1 = ws.getCell('A1'); c1.value = d.title; c1.font = { name: FN, size: 16, bold: true }; c1.alignment = { vertical: 'middle' }; ws.getRow(1).height = 26;
+    [[2, d.l1], [3, d.l2]].forEach(([r, t]) => { ws.mergeCells(`A${r}:G${r}`); const c = ws.getCell(`A${r}`); c.value = t; c.font = { name: FN, size: 11 }; c.alignment = { vertical: 'middle' }; });
     ws.getRow(4).height = 8;
     // Encabezado de la tabla
-    const hr = ws.getRow(HR); COLS.forEach((t, i) => { const c = hr.getCell(i + 1); c.value = t; c.font = { name: FN, size: 11, bold: true, color: { argb: BLANCO } }; c.fill = fill(NEGRO); c.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true }; c.border = box; }); hr.height = 30;
+    const hr = ws.getRow(HR); COLS.forEach((t, i) => { const c = hr.getCell(i + 1); c.value = t; c.font = { name: FN, size: 11, bold: true }; c.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true }; c.border = box; }); hr.height = 30;
     // Filas. La FECHA queda vacía: la escribe a mano el auxiliar.
     d.rows.forEach((r, i) => {
       const rn = HR + 1 + i, row = ws.getRow(rn);
-      const vals = [r.n, r.c, r.d, r.ub, r.s === null ? null : r.s, null, r.ok ? (r.q !== null ? r.q : 'Contado') : null, { formula: `IF(AND(ISNUMBER(E${rn}),ISNUMBER(G${rn})),G${rn}-E${rn},"")`, result: r.dif === null ? '' : r.dif }];
+      const vals = [r.c, r.d, r.ub, r.s === null ? null : r.s, null, r.ok ? (r.q !== null ? r.q : 'Contado') : null, { formula: `IF(AND(ISNUMBER(D${rn}),ISNUMBER(F${rn})),F${rn}-D${rn},"")`, result: r.dif === null ? '' : r.dif }];
       vals.forEach((v, k) => {
         const c = row.getCell(k + 1); if (v !== null) c.value = v;
-        c.border = box; c.font = { name: FN, size: 11, bold: k === 6 || k === 7 };
-        c.alignment = { vertical: 'middle', horizontal: k === 2 || k === 3 ? 'left' : 'center', wrapText: k === 2 || k === 3 };
-        if (i % 2) c.fill = fill(GRIS);
+        c.border = box; c.font = { name: FN, size: 11 };
+        c.alignment = { vertical: 'middle', horizontal: k === 1 || k === 2 ? 'left' : 'center', wrapText: k === 1 || k === 2 };
       });
-      row.getCell(6).numFmt = 'dd/mm/yyyy'; row.getCell(5).numFmt = '#,##0.##'; row.getCell(7).numFmt = '#,##0.##'; row.getCell(8).numFmt = '+#,##0.##;-#,##0.##;0';
+      row.getCell(5).numFmt = 'dd/mm/yyyy'; row.getCell(4).numFmt = '#,##0.##'; row.getCell(6).numFmt = '#,##0.##'; row.getCell(7).numFmt = '+#,##0.##;-#,##0.##;0';
       row.height = Math.max(22, 16 * Math.max(Math.ceil(r.d.length / 52), Math.ceil(r.ub.length / 24)));
     });
     const last = HR + d.rows.length, tr = ws.getRow(last + 1), tn = last + 1;
-    ws.mergeCells(`A${tn}:D${tn}`); tr.getCell(1).value = 'TOTAL'; tr.getCell(1).alignment = { horizontal: 'right', vertical: 'middle' };
-    tr.getCell(5).value = { formula: `SUM(E${HR + 1}:E${last})`, result: d.pzSis }; tr.getCell(7).value = { formula: `SUM(G${HR + 1}:G${last})`, result: d.pzCont };
-    for (let k = 1; k <= 8; k++) { const c = tr.getCell(k); c.font = { name: FN, size: 11, bold: true, color: { argb: NEGRO } }; c.fill = fill(GRIS2); c.border = { top: { style: 'medium', color: { argb: NEGRO } }, bottom: thin, left: thin, right: thin }; if (k > 1) c.alignment = { horizontal: 'center', vertical: 'middle' }; }
+    ws.mergeCells(`A${tn}:C${tn}`); tr.getCell(1).value = 'TOTAL'; tr.getCell(1).alignment = { horizontal: 'right', vertical: 'middle' };
+    tr.getCell(4).value = { formula: `SUM(D${HR + 1}:D${last})`, result: d.pzSis }; tr.getCell(6).value = { formula: `SUM(F${HR + 1}:F${last})`, result: d.pzCont };
+    for (let k = 1; k <= 7; k++) { const c = tr.getCell(k); c.font = { name: FN, size: 11, bold: true }; c.border = box; if (k > 1) c.alignment = { horizontal: 'center', vertical: 'middle' }; }
     tr.height = 24;
-    if (d.rows.length) ws.autoFilter = { from: { row: HR, column: 1 }, to: { row: last, column: 8 } };
+    if (d.rows.length) ws.autoFilter = { from: { row: HR, column: 1 }, to: { row: last, column: 7 } };
     // Carta horizontal, ajustado al ancho, con el encabezado repetido en cada hoja
-    ws.pageSetup = { paperSize: 1, orientation: 'landscape', fitToPage: true, fitToWidth: 1, fitToHeight: 0, horizontalCentered: true, printTitlesRow: `${HR}:${HR}`, printArea: `A1:H${tn}`, margins: { left: 0.4, right: 0.4, top: 0.5, bottom: 0.6, header: 0.25, footer: 0.3 } };
+    ws.pageSetup = { paperSize: 1, orientation: 'landscape', fitToPage: true, fitToWidth: 1, fitToHeight: 0, horizontalCentered: true, printTitlesRow: `${HR}:${HR}`, printArea: `A1:G${tn}`, margins: { left: 0.4, right: 0.4, top: 0.5, bottom: 0.6, header: 0.25, footer: 0.3 } };
     ws.headerFooter.oddFooter = '&L&"Cambria,Regular"&8Multipart Bodega&C&"Cambria,Regular"&8Página &P de &N&R&"Cambria,Regular"&8Impreso: &D';
     const buf = await wb.xlsx.writeBuffer();
     bajar(new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }), d.nombreArchivo + '.xlsx'); toast('Excel descargado', 2500);
@@ -3329,11 +3316,11 @@ function muesRead(text) {
   if (!it) { msg = `✕ No está en el catálogo: ${t}`; cls = 'bad'; beep(260, 1, 0.25); vib(260); }
   else {
     let x = m.items.find(y => y.c === it.c);
-    if (!x && m.estado === 'cerrado') { msg = `⚠ No es de este muestreo y está cerrado: ${it.d}`; cls = 'warn'; beep(520, 2); vib([90, 70, 90]); }
+    if (!x && m.estado === 'cerrado') { msg = `Muestreo cerrado, no se agregó: ${it.d}`; cls = 'warn'; beep(520, 2); vib([90, 70, 90]); }
     else if (!x) {
       // El muestreo no lo traía (a veces se omiten códigos): se agrega solo y se pide la cantidad
       m.items.unshift({ c: it.c, e: 'pend', u: '', t: 0, q: null, s: stkQty(it.c), sf: STK.t || 0 }); mueTouch(m); drawMueDet();
-      msg = `➕ No estaba en el muestreo, se agregó: ${it.d}`; cls = 'warn'; beep(900, 2); vib([60, 60, 60]); toast('Producto agregado al muestreo: ' + it.d, 3500);
+      msg = `Agregado al muestreo: ${it.d}`; cls = 'warn'; beep(900, 2); vib([60, 60, 60]);
       setTimeout(() => mueEsta(it.c), 150);
     }
     else if (x.e === 'ok') { msg = `ℹ Ya estaba marcado: ${it.d}`; cls = 'warn'; beep(700, 1); vib(60); }
@@ -3441,9 +3428,9 @@ $('#stkFile').addEventListener('change', async e => {
     if (!r.rows.length) throw new Error('No encontré productos con cantidad debajo de los encabezados.');
     SK.rows = r.rows; SK.nombre = f.name.replace(/\.[^.]+$/, '').slice(0, 80);
     const set = new Set(r.rows.map(x => x.c.toUpperCase())), coinciden = IDX.reduce((n, it) => n + (set.has(String(it.c).trim().toUpperCase()) ? 1 : 0), 0);
-    m.innerHTML = `<b>${r.rows.length}</b> productos leídos · cantidad tomada de la columna «${esc(r.colCant)}»` + (r.rep ? ` · ${r.rep} códigos repetidos (se sumaron)` : '') + (r.sinCant ? ` · ${r.sinCant} filas sin cantidad (se omitieron)` : '');
+    m.innerHTML = `<b>${r.rows.length}</b> productos · columna «${esc(r.colCant)}»` + (r.rep ? ` · ${r.rep} repetidos sumados` : '') + (r.sinCant ? ` · ${r.sinCant} filas sin cantidad` : '');
     const omit = IDX.length - coinciden, fuera = r.rows.length - coinciden;
-    $('#stkPrev').innerHTML = `<p class="soft"><b>${coinciden}</b> de ${IDX.length} productos de tu catálogo tienen existencia en este Excel.` + (omit > 0 ? ` <b>${omit}</b> no vienen en el Excel: igual aparecerán en los muestreos, sin cantidad de sistema.` : '') + (fuera > 0 ? ` ${fuera} códigos del Excel no están en tu catálogo (se ignoran; este Excel no agrega productos).` : '') + '</p>' +
+    $('#stkPrev').innerHTML = `<p class="soft"><b>${coinciden}</b> de ${IDX.length} productos con existencia` + (omit > 0 ? ` · ${omit} no vienen en el Excel` : '') + (fuera > 0 ? ` · ${fuera} códigos no están en el catálogo` : '') + '</p>' +
       '<div class="mbox" style="max-height:30dvh;overflow-y:auto">' + r.rows.slice(0, 8).map(x => `<div class="pit"><div class="pmain"><b>${esc(x.d || x.c)}</b><small>${esc(x.c)}</small></div><span class="tag warn">${x.q}</span></div>`).join('') + '</div>' +
       (r.rows.length > 8 ? `<p class="soft">…y ${r.rows.length - 8} más</p>` : '');
     $('#stkGo').hidden = false;
@@ -3463,10 +3450,10 @@ $('#stkGo').addEventListener('click', async () => {
       hecho += j.guardados || 0; if (fin) t = j.t;
     }
     stkSet(t || Date.now(), SES.usuario || 'OWNER', hecho, SK.nombre, rows.map(x => [x.c, x.q]), true);
-    m.textContent = `Listo: ${hecho} productos cargados. Los muestreos nuevos ya usan estas existencias.`; $('#stkGo').hidden = true; $('#stkPrev').innerHTML = ''; SK.rows = []; $('#stkFile').value = '';
+    m.textContent = `${hecho} productos cargados`; $('#stkGo').hidden = true; $('#stkPrev').innerHTML = ''; SK.rows = []; $('#stkFile').value = '';
     drawStkInfo(); mueStkAutoAll(); if (MUE.cur) drawMueDet();
   } catch (err) {
-    m.textContent = (err instanceof NetErr ? 'Se cortó el internet' : err.message) + '. No se terminó de cargar: los teléfonos siguen usando las existencias anteriores. Vuelve a intentarlo.'; b.disabled = false;
+    m.textContent = (err instanceof NetErr ? 'Se cortó el internet' : err.message) + '. No se terminó de cargar, inténtalo de nuevo.'; b.disabled = false;
   } finally { SK.busy = false; $('#stkNo').disabled = false; $('#stkFile').disabled = false; }
 });
 
@@ -3644,7 +3631,7 @@ $('#dteToUb').addEventListener('click', () => {
     const st = addItem(r.it, f, r.c);
     if (st === 'pend') { const row = UBI.rows.find(x => x.st === 'pend' && x.it === r.it && x.loc === f); if (row && r.q > 0) row.cant = r.q; n++; }
   });
-  renderUbi(); $('#dteDlg').close(); toast(`${n} productos en la lista para ${f}. Revisa y toca Guardar.`, 4500);
+  renderUbi(); $('#dteDlg').close(); toast(`${n} productos en la lista`, 3000);
 });
 $('#dteAdd').addEventListener('click', async () => {
   const miss = DTE.rows.filter(r => !r.it); if (!miss.length) return;
@@ -4093,13 +4080,13 @@ async function pushTest() {
   try {
     const j = await apiPost('push_prueba');
     if (!j.ok) throw new Error(j.error || 'Error');
-    toast(!j.n ? 'Este teléfono no quedó registrado. Toca Avisos otra vez.' : j.aceptados === j.n ? 'Aviso de prueba enviado: debe llegar en unos segundos. Si no suena, revisa en los ajustes del teléfono que las notificaciones de Multipart Bodega estén activas y con sonido.' : 'Google rechazó el aviso: ' + (j.codigos[0] || 'error'), 8000);
+    toast(!j.n ? 'Este teléfono no quedó registrado. Toca Avisos otra vez.' : j.aceptados === j.n ? 'Aviso de prueba enviado' : 'Google rechazó el aviso: ' + (j.codigos[0] || 'error'), 8000);
   } catch (e) { toast(e instanceof NetErr ? 'Necesitas internet' : 'No se pudo probar el aviso: ' + e.message, 4500); }
 }
 $('#pushBtn').addEventListener('click', async () => {
   if (pushOK() && Notification.permission === 'granted' && $('#pushBtn').classList.contains('on')) { pushTest(); return; }
-  if (!pushOK()) { toast('Para recibir avisos instala la app (menú ⋮ → Instalar app) y ábrela desde su ícono. En iPhone: Compartir → Agregar a inicio (iOS 16.4 o más).', 7000); return; }
-  if (Notification.permission === 'denied') { toast('Los avisos están bloqueados. Actívalos en los ajustes del navegador (candado junto a la dirección → Notificaciones).', 7000); return; }
+  if (!pushOK()) { toast('Instala la app para recibir avisos (menú ⋮ → Instalar app)', 6000); return; }
+  if (Notification.permission === 'denied') { toast('Los avisos están bloqueados en el navegador', 5000); return; }
   try {
     if (Notification.permission !== 'granted' && (await Notification.requestPermission()) !== 'granted') { toast('No se activaron los avisos', 3000); return; }
     const sub = await pushSub(true); const j = await apiPost('push_registrar', { endpoint: sub.endpoint });
@@ -4159,7 +4146,7 @@ function drawPedList() {
     (adm ? 'Crea un pedido y envíalo a todos los auxiliares o solo a algunos' + (ens ? ', o mándalo a otra sucursal.' : '.') : 'Los pedidos que te manda el administrador. Marca cada producto cuando lo tengas.');
   const lista = PED.vista === 'rec' ? rec : PED.vista === 'env' ? sent : loc, env = PED.vista === 'env';
   $('#pedList').innerHTML = lista.length ? lista.map(p => pedCard(p, env)).join('')
-    : `<div class="empty-state"><h2>${env ? 'No has enviado pedidos a otra sucursal' : PED.vista === 'rec' ? 'No te han mandado pedidos de otra sucursal' : 'Aún no hay pedidos'}</h2><p>${env ? 'Toca «Nuevo pedido» y elige «Mandar a» otra sucursal.' : PED.vista === 'rec' ? 'Cuando otra sucursal te mande uno, aparecerá aquí.' : (adm ? 'Toca «Nuevo pedido» para crear el primero.' : 'Cuando el administrador te mande uno, aparecerá aquí.')}</p></div>`;
+    : `<div class="empty-state"><h2>${env ? 'No has enviado pedidos a otra sucursal' : PED.vista === 'rec' ? 'No te han mandado pedidos de otra sucursal' : 'Aún no hay pedidos'}</h2></div>`;
 }
 $('#pedTabs').addEventListener('click', e => { const b = e.target.closest('[data-pv]'); if (!b) return; PED.vista = b.dataset.pv; drawPedList(); });
 $('#pedList').addEventListener('click', e => { const b = e.target.closest('[data-pid]'); if (b) openPed(b.dataset.pid, b.dataset.psuc || ''); });
@@ -4427,7 +4414,7 @@ $('#xlsMake').addEventListener('click', async () => {
   const items = [...mapa.values()].map(x => { const f = XLS.ub[x.c], it = CODEMAP_get(x.c), o = { c: x.c, d: (!destSuc && it ? it.d : '') || x.d || (f && f.dd) || x.c, q: x.q, col: x.col || '', h: false, sel: false }; if (destSuc && f) { o.ub = f.raw || []; o.dd = f.dd; } return o; });
   PED.cur = { id: 'ped_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), titulo: XLS.titulo, nota: '', dest: '*', estado: 'abierto', items, isNew: true, dirty: true, creador: SES.usuario, destSuc };
   $('#xlsDlg').close(); $('#pedListBox').hidden = true; $('#pedDet').hidden = false; drawPedDet(); window.scrollTo(0, 0);
-  toast('Revisa el pedido y toca «Enviar pedido»', 4000);
+  toast('Excel leído', 2000);
 });
 $('#pedBack').addEventListener('click', () => {
   if (PED.cur && PED.cur.dirty && isAdmin() && !confirm('Hay cambios sin enviar. ¿Salir sin guardarlos?')) return;
@@ -4461,7 +4448,7 @@ function drawPedDet() {
   const usr = p.destSuc ? (PED.usersX[p.destSuc] || []) : PED.users;
   const ens = adm && p.isNew ? enviarA() : [];
   const filaSuc = ens.length ? `<div class="soft" style="margin:10px 0 4px">Mandar a:</div><div class="dchips"><button class="seg-b" data-ps="" aria-pressed="${!p.destSuc}">Esta sucursal</button>${ens.map(x => `<button class="seg-b" data-ps="${esc(x)}" aria-pressed="${p.destSuc === x}">${esc(sucInfo(x).nombre)}</button>`).join('')}</div>` : '';
-  const lineaSuc = (!p.isNew && p.destSuc) ? `<p class="soft" style="margin-top:10px">Enviado a <b>${esc(sucInfo(p.destSuc).nombre)}</b>: sus auxiliares lo ven con las ubicaciones de esa sucursal.</p>` : (p.origen && p.origen !== SES.suc ? `<p class="soft" style="margin-top:10px">Pedido de <b>${esc(sucInfo(p.origen).nombre)}</b></p>` : '');
+  const lineaSuc = (!p.isNew && p.destSuc) ? `<p class="soft" style="margin-top:10px">Enviado a <b>${esc(sucInfo(p.destSuc).nombre)}</b></p>` : (p.origen && p.origen !== SES.suc ? `<p class="soft" style="margin-top:10px">Pedido de <b>${esc(sucInfo(p.origen).nombre)}</b></p>` : '');
   $('#pedDest').innerHTML = adm
     ? filaSuc + lineaSuc + `<div class="soft" style="margin:10px 0 4px">Enviar a${p.destSuc ? ' (' + esc(sucInfo(p.destSuc).nombre) + ')' : ''}:</div><div class="dchips"><button class="seg-b" data-pd="*" aria-pressed="${p.dest === '*'}">Todos los auxiliares</button>` +
       usr.map(u => `<button class="seg-b" data-pd="${esc(u.usuario)}" aria-pressed="${p.dest !== '*' && p.dest.includes(u.usuario)}">${esc(u.nombre || u.usuario)}</button>`).join('') + '</div>'
@@ -4474,7 +4461,7 @@ function drawPedDet() {
     const chk = adm ? `<input type="checkbox" data-sel="${esc(x.c)}" ${x.sel ? 'checked' : ''} aria-label="Marcar ${esc(x.d)}">` : `<input type="checkbox" data-hecho="${esc(x.c)}" ${x.h ? 'checked' : ''} aria-label="Hecho: ${esc(x.d)}">`;
     const qty = adm ? `<input class="qin" type="number" inputmode="numeric" min="0" max="999999" data-pq="${esc(x.c)}" value="${x.q != null ? x.q : ''}" placeholder="Cant." aria-label="Cantidad pedida">` : (x.q != null ? `<span class="pqty">${x.q} PCS</span>` : '');
     return `<div class="pit${x.col ? ' c-' + x.col : ''}${x.h ? ' hecho' : ''}"><label class="pchk">${chk}</label><div class="pmain"><b>${esc(pedNombre(p, x))}</b><small>${esc(x.c)}${x.col ? ` · <em>${esc(PCOL[x.col])}</em>` : ''}${x.h ? ` · hecho${x.hp ? ' por ' + esc(x.hp) : ''}` : ''}</small><div class="bins">${bins}${ult ? `${cpBtn(ult, 'pd|' + p.id + '|' + x.c)}` : ''}</div></div>${qty}</div>`;
-  }).join('') + '</div>' : '<div class="empty-state"><h2>Pedido vacío</h2><p>Busca productos arriba para agregarlos.</p></div>';
+  }).join('') + '</div>' : '<div class="empty-state"><h2>Pedido vacío</h2></div>';
   $('#pedSave').hidden = !adm; $('#pedSave').textContent = p.isNew ? 'Enviar pedido' : 'Guardar cambios';
   $('#pedClose').hidden = !adm || p.isNew; $('#pedClose').textContent = p.estado === 'cerrado' ? 'Reabrir pedido' : 'Cerrar pedido';
   $('#pedDel').hidden = !adm || p.isNew;
