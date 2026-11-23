@@ -450,6 +450,25 @@ body{overflow-x:hidden}
   #printArea tr.hecho td{color:#777;text-decoration:line-through}
   #printArea tr{break-inside:avoid}
   #printArea,#printArea *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  #printArea.mue{font-size:9pt;font-family:Cambria,'Times New Roman',Georgia,serif;color:#000}
+  #printArea.mue *{font-family:Cambria,'Times New Roman',Georgia,serif!important}
+  #printArea.mue .mh{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;border-bottom:3px solid #000;padding-bottom:6px;margin-bottom:8px}
+  #printArea.mue h1{font-size:18pt;margin:0 0 2px;color:#000}
+  #printArea.mue .mm{margin:0;color:#000;font-size:9pt;line-height:1.45}
+  #printArea.mue .mst{display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end;max-width:46%}
+  #printArea.mue .mst span{border:1px solid #000;background:#fff;color:#000;border-radius:99px;padding:2px 8px;font-weight:700;font-size:8pt;white-space:nowrap}
+  #printArea.mue table.mt{width:100%;border-collapse:collapse;table-layout:fixed}
+  #printArea.mue table.mt thead{display:table-header-group}
+  #printArea.mue table.mt th{background:#000;color:#fff;font-size:8.5pt;text-align:center;padding:5px 4px;border:1px solid #000;letter-spacing:.02em}
+  #printArea.mue table.mt td{padding:3.5px 5px;border:1px solid #000;vertical-align:middle;font-size:9pt;height:7.5mm;background:#fff}
+  #printArea.mue table.mt tbody tr:nth-child(even) td{background:#f0f0f0}
+  #printArea.mue table.mt tr{break-inside:avoid;page-break-inside:avoid}
+  #printArea.mue td.n,#printArea.mue td.c,#printArea.mue td.f{text-align:center}
+  #printArea.mue td.cod{font-size:8.5pt;word-break:break-all}
+  #printArea.mue td.q,#printArea.mue td.d{text-align:center;font-weight:700}
+  #printArea.mue table.mt tfoot{display:table-row-group}
+  #printArea.mue tfoot td{background:#d9d9d9!important;font-weight:700;border-top:2px solid #000}
+  #printArea.mue .mfoot{margin-top:8px;color:#000;font-size:8pt;text-align:right}
 }
 body.ventas nav.tabs, body.ventas #adminBtn, body.ventas .locwrap, body.ventas .bin, body.ventas #vLoc, body.ventas #vLocEdit, body.ventas #vDel, body.ventas #cpClear { display: none !important; }
 body.ventas #locShare { display: none !important; }
@@ -554,8 +573,14 @@ body.ventas #locShare { display: none !important; }
         <div class="row">
           <select class="sel" id="mueUser" aria-label="Filtrar por auxiliar" hidden></select>
           <button class="btn" id="resBtn" style="flex:none;height:44px" hidden>Resumen por auxiliar</button>
+          <button class="btn" id="stkBtn" style="flex:none;height:44px" hidden>Existencias del sistema</button>
           <button class="btn tape" id="mueStart" style="flex:none;height:44px">Iniciar muestreo</button>
         </div>
+      </div>
+      <div class="dchips" id="mueTabs" style="margin:10px 0"></div>
+      <div class="row" id="mueHistBar" style="gap:8px;margin:0 0 10px" hidden>
+        <input id="mueQ" type="search" autocomplete="off" placeholder="Buscar por nombre o auxiliar" aria-label="Buscar en el historial" style="flex:1;min-width:150px;height:42px;border:1px solid var(--line);border-radius:12px;background:var(--surface);padding:0 12px;font:500 15px var(--sans);color:var(--ink);letter-spacing:0;text-transform:none">
+        <select class="sel" id="mueMes" aria-label="Filtrar por mes"></select>
       </div>
       <div id="mueList"></div>
     </div>
@@ -568,11 +593,14 @@ body.ventas #locShare { display: none !important; }
         </div>
         <div class="row">
           <button class="btn tape" id="mueScan" style="flex:none;height:44px">Escanear productos</button>
+          <button class="btn" id="mueXls" style="flex:none;height:44px">Excel</button>
+          <button class="btn" id="muePrint" style="flex:none;height:44px">Imprimir</button>
           <button class="btn" id="mueClose" style="flex:none;height:44px">Cerrar muestreo</button>
         </div>
       </div>
       <div class="pbar big"><i id="muePbar"></i></div>
       <div class="mstats" id="mueStats"></div>
+      <div id="mueStk" style="display:flex;gap:8px 10px;align-items:center;flex-wrap:wrap;margin-top:8px;font-size:13px;color:var(--mute)" hidden></div>
       <div class="seg" id="mueSeg" role="group" aria-label="Filtrar productos" style="margin-top:14px;flex-wrap:wrap"></div>
       <div id="mueItems"></div>
       <button class="more" id="mueMore" hidden>Mostrar más</button>
@@ -815,10 +843,16 @@ body.ventas #locShare { display: none !important; }
 </dialog>
 
 <dialog id="qtyDlg" aria-label="Cantidad">
-  <div class="pin-box">
+  <div class="pin-box" style="max-height:calc(100dvh - 24px);overflow-y:auto">
     <h2 id="qtyTitle">Cantidad</h2>
     <p id="qtySub" style="color:var(--mute);font-size:15px"></p>
     <div class="qrow"><button class="btn" id="qtyMinus" style="flex:none;width:52px" aria-label="Menos">−</button><input id="qtyIn" type="number" inputmode="numeric" min="0" max="999999" placeholder="Cantidad" aria-label="Cantidad" style="flex:1;min-width:0"><button class="btn" id="qtyPlus" style="flex:none;width:52px" aria-label="Más">+</button></div>
+    <div id="qtyLocs" hidden>
+      <p class="soft" id="qtyHint" style="font-size:13px;margin:0 0 6px">Ubicaciones y cuántas hay en cada una. El total se suma solo.</p>
+      <ul class="loclist" id="qtyLocList" style="max-height:min(28dvh,220px)"></ul>
+      <div class="qrow" style="margin-top:8px"><input id="qtyLocIn" maxlength="40" autocomplete="off" placeholder="Nueva ubicación, ej: 3B2" style="flex:1 1 100%;min-width:0;letter-spacing:.05em;text-transform:uppercase;font-size:16px" aria-label="Nueva ubicación"><input id="qtyLocQ" class="qin" type="number" inputmode="numeric" min="0" max="999999" placeholder="Cant." aria-label="Cantidad en la nueva ubicación" style="width:96px;flex:none;letter-spacing:normal"><button class="btn" id="qtyLocAdd" style="flex:1;height:38px;padding:0 14px">Agregar ubicación</button></div>
+    </div>
+    <div id="qtyShare" class="shnote" hidden></div>
     <div class="pin-err" id="qtyErr" aria-live="polite"></div>
     <div class="row"><button class="btn tape" id="qtyOk">Guardar cantidad</button></div>
     <div class="row"><button class="btn" id="qtySkip">Sin cantidad</button><button class="btn" id="qtyNo">Cancelar</button></div>
@@ -854,6 +888,19 @@ body.ventas #locShare { display: none !important; }
       <button class="btn tape" id="xlsMake">Crear pedido en la app</button>
     </div>
     <div class="row"><button class="btn" id="xlsNo">Cerrar</button></div>
+  </div>
+</dialog>
+
+<dialog id="stkDlg" aria-label="Existencias del sistema">
+  <div class="pin-box wide" style="max-height:calc(100dvh - 24px);overflow-y:auto">
+    <h2>Existencias del sistema</h2>
+    <p class="soft">Sube el Excel de tu sistema con <b>CODIGO</b>, <b>DESCRIPCION</b> y <b>CANTIDAD</b> (también sirve EXISTENCIA, STOCK o SALDO). Puede tener la misma estructura del Excel de «Subir productos»: de él solo se toman las <b>cantidades</b>. Reemplaza al anterior: puedes subir uno nuevo cada día. Los productos que tu empresa omita en el Excel <b>siguen apareciendo en los muestreos</b> (porque están en tu catálogo), marcados como «No venía en el Excel del sistema».</p>
+    <div id="stkInfo" style="font-size:14px;flex:none"></div>
+    <input style="letter-spacing:normal;text-transform:none;font-size:14px" id="stkFile" type="file" accept=".xlsx,.xls,.csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" aria-label="Excel de existencias">
+    <div id="stkMsg" aria-live="polite" style="color:var(--mute);font-size:14px;flex:none"></div>
+    <div id="stkPrev" style="flex:none"></div>
+    <div class="row"><button class="btn tape" id="stkGo" hidden>Cargar existencias</button></div>
+    <div class="row"><button class="btn" id="stkNo">Cerrar</button></div>
   </div>
 </dialog>
 
@@ -959,8 +1006,8 @@ body.ventas #locShare { display: none !important; }
 /* =====================================================================
    CONFIGURACIÓN: pega aquí la URL de tu Apps Script (termina en /exec)
    ===================================================================== */
-const API_URL = 'https://script.google.com/macros/s/AKfycbxsGqFts8f7ekGRzI836Syi7XJo2Vtynzn5EaJ_82H8lyP8-4-f9jqt2Q2drK7TYfrI/exec';
-const SERVER_MIN = 30;   // versión mínima de Code.gs que necesita esta web
+const API_URL = 'https://script.google.com/macros/s/AKfycbzwsuuEd8Jbp9ZHe9kyGdvRFk81MkE6M3Ua8xSzI8Ri-nN6EZVrV1JlGyXDWl79mVcP/exec';
+const SERVER_MIN = 33;   // versión mínima de Code.gs que necesita esta web
 // Sucursales: el "id" debe ser igual al de Code.gs. Cada una tiene SU PROPIA hoja de Google (su catálogo, fotos y ubicaciones).
 // embebido: true = usa el catálogo incluido abajo mientras descarga el de su hoja (solo sirve para una sucursal).
 const SUCURSALES = [
@@ -1032,7 +1079,7 @@ async function rawPost(body, ms = 25000) {
   finally { clearTimeout(tm); }
   try { return await r.json(); } catch (e) { throw new NetErr('Respuesta no válida del servidor'); }
 }
-const ACC_LARGAS = new Set(['pedido_ubic', 'transfer_run', 'transfer_preview', 'transfer_lista', 'drive_sync', 'organizar_fotos', 'foto_importar', 'productos_importar', 'fotos_de', 'muestreo_guardar', 'pedido_guardar']);
+const ACC_LARGAS = new Set(['pedido_ubic', 'transfer_run', 'transfer_preview', 'transfer_lista', 'drive_sync', 'organizar_fotos', 'foto_importar', 'productos_importar', 'fotos_de', 'muestreo_guardar', 'pedido_guardar', 'stock_cargar', 'stock_get']);
 async function apiAs(suc, action, payload = {}) {
   if (!SES) throw new Error('Sin sesión');
   const j = await rawPost({ ...payload, action, suc, usuario: SES.usuario || '', clave: SES.clave }, ACC_LARGAS.has(action) ? 120000 : 25000);
@@ -1738,22 +1785,89 @@ function localAdd(it, u, ts, q) {
 function localDel(it, u) { setLocs(it, (it.ubs || []).filter(x => x.u !== u).map(x => [x.u, x.t || '', qOf(x)])); }
 function localQty(it, u, q) { setLocs(it, (it.ubs || []).map(x => [x.u, x.t || '', x.u === u ? q : qOf(x)])); }
 // Pregunta cuántas piezas hay. Devuelve {q:número}, {q:null} (sin cantidad) o null (cancelar)
-function askQty(titulo, sub, valor, obligatoria) {
+function askQty(titulo, sub, valor, obligatoria, opts) {
   return new Promise(res => {
     const d = $('#qtyDlg'); $('#qtyTitle').textContent = titulo; $('#qtySub').textContent = sub || '';
     const inp = $('#qtyIn'); inp.value = valor != null ? valor : ''; let fin = false;
     const done = v => { if (fin) return; fin = true; d.close(); res(v); };
     $('#qtySkip').hidden = !!obligatoria;
+    const it = opts && opts.it, pend = {};
+    $('#qtyLocs').hidden = !it; $('#qtyLocIn').value = ''; $('#qtyLocQ').value = ''; $('#qtyShare').hidden = true;
+    const err = t => { $('#qtyErr').textContent = t || ''; };
+    // total = suma de las cantidades de cada ubicación (si hay al menos una escrita)
+    const recalc = () => {
+      let suma = 0, hay = false;
+      (it.ubs || []).forEach(x => { const t = pend[x.u] !== undefined ? pend[x.u] : (qOf(x) === null ? '' : String(qOf(x))); if (t !== '' && !isNaN(+t)) { suma += Math.round(+t); hay = true; } });
+      if (hay) inp.value = suma;
+    };
+    const drawQL = () => {
+      const L = (it.ubs || []).slice().reverse();
+      $('#qtyLocList').innerHTML = L.length ? L.map(x => { const v = pend[x.u] !== undefined ? pend[x.u] : (qOf(x) === null ? '' : qOf(x));
+        return `<li><span class="bin">${esc(x.u)}</span><input class="qin" type="number" inputmode="numeric" min="0" max="999999" data-lq="${esc(x.u)}" value="${esc(String(v))}" placeholder="Cant." aria-label="Cantidad en ${esc(x.u)}" style="width:76px"><small style="color:var(--mute)">PCS</small><button class="mini del" data-ldel="${esc(x.u)}" aria-label="Quitar la ubicación ${esc(x.u)}" style="margin-left:auto;padding:4px 10px">✕</button></li>`; }).join('')
+        : '<li class="none">Este producto no tiene ubicaciones</li>';
+    };
+    if (it) drawQL();
+    $('#qtyLocList').oninput = e => { const i = e.target.closest('[data-lq]'); if (!i) return; pend[i.dataset.lq] = i.value.trim(); recalc(); };
+    $('#qtyLocList').onclick = async e => {
+      const b = e.target.closest('[data-ldel]'); if (!b || !it) return;
+      const u = b.dataset.ldel;
+      if (!confirm(`¿Quitar la ubicación ${u} de este producto? Las demás se quedan.`)) return;
+      err('Quitando…'); b.disabled = true;
+      try { const q = await opts.del(u); delete pend[u]; $('#qtyShare').hidden = true; drawQL(); recalc(); err(''); toast(q ? QMSG : 'Ubicación quitada', q ? 3800 : 2200); }
+      catch (x) { err('No se pudo quitar: ' + x.message); b.disabled = false; }
+    };
+    const agregar = async () => {
+      if (!it) return;
+      const v = $('#qtyLocIn').value.replace(/\s+/g, ' ').trim().toUpperCase();
+      if (!v) { err('Escribe la ubicación'); return; }
+      const qt = $('#qtyLocQ').value.trim(), qn = qt === '' ? null : Math.round(+qt);
+      if (qt !== '' && (isNaN(qn) || qn < 0 || qn > 999999)) { err('La cantidad debe ser un número'); return; }
+      const otros = (locIdx().get(v) || []).filter(i => i.c !== it.c), yaTenia = (it.ubs || []).some(x => x.u === v);
+      err('Guardando…'); $('#qtyLocAdd').disabled = true;
+      try { const q = await opts.add(v, qn); delete pend[v]; { const sh = locAviso(v, otros, yaTenia); $('#qtyShare').innerHTML = sh; $('#qtyShare').hidden = !sh; } $('#qtyLocIn').value = ''; $('#qtyLocQ').value = ''; drawQL(); recalc(); err(''); toast(q ? QMSG : 'Ubicación agregada', q ? 3800 : 2200); }
+      catch (x) { err('No se pudo guardar: ' + x.message); }
+      $('#qtyLocAdd').disabled = false;
+    };
+    $('#qtyLocAdd').onclick = agregar;
+    $('#qtyLocIn').onkeydown = e => { if (e.key === 'Enter') { e.preventDefault(); agregar(); } };
+    $('#qtyLocQ').onkeydown = e => { if (e.key === 'Enter') { e.preventDefault(); agregar(); } };
     const rd = () => { const t = inp.value.trim(); if (t === '') return obligatoria ? undefined : { q: null }; const n = Math.round(+t); return (isNaN(n) || n < 0 || n > 999999) ? undefined : { q: n }; };
-    $('#qtyOk').onclick = () => { const v = rd(); if (v === undefined) { $('#qtyErr').textContent = obligatoria ? 'Escribe la cantidad (si no hay ninguna, pon 0)' : 'Escribe un número, ej: 4'; return; } done(v); };
+    $('#qtyOk').onclick = async () => {
+      const v = rd(); if (v === undefined) { err(obligatoria ? 'Escribe la cantidad (si no hay ninguna, pon 0)' : 'Escribe un número, ej: 4'); return; }
+      if (it && opts.commit) {
+        $('#qtyOk').disabled = true; err('Guardando…');
+        try { await opts.commit(pend); } catch (x) { err('No se pudo guardar: ' + x.message); $('#qtyOk').disabled = false; return; }
+        $('#qtyOk').disabled = false;
+      }
+      done(v);
+    };
     $('#qtySkip').onclick = () => done({ q: null });
     $('#qtyNo').onclick = () => done(null);
     $('#qtyMinus').onclick = () => { inp.value = Math.max(0, (+inp.value || 0) - 1); };
     $('#qtyPlus').onclick = () => { inp.value = (+inp.value || 0) + 1; };
     inp.onkeydown = e => { if (e.key === 'Enter') { e.preventDefault(); $('#qtyOk').click(); } };
     d.onclose = () => done(null);
-    $('#qtyErr').textContent = ''; d.showModal(); inp.focus(); inp.select();
+    err(''); d.showModal(); inp.focus(); inp.select();
   });
+}
+// Ubicaciones de un producto desde el cuadro de cantidad del muestreo
+async function locAddFor(it, v, qn) {
+  const r = await apiQ('ubicacion_add', qn === null ? { codigo: it.c, ubicacion: v } : { codigo: it.c, ubicacion: v, cantidad: qn });
+  if (!r.ok) throw new Error(r.error || 'Error');
+  if (r.queued) localAdd(it, v, undefined, qn === null ? undefined : qn); else { setLocs(it, r.ubs); logLocal(it, v, 'agregada'); }
+  UBI.locIdx = null; return !!r.queued;
+}
+async function locDelFor(it, u) {
+  const r = await apiQ('ubicacion_del', { codigo: it.c, ubicacion: u });
+  if (!r.ok) throw new Error(r.error || 'Error');
+  if (r.queued) localDel(it, u); else { setLocs(it, r.ubs); logLocal(it, u, 'quitada'); }
+  UBI.locIdx = null; return !!r.queued;
+}
+async function locQtyFor(it, u, q) {
+  const r = await apiQ('ubicacion_cantidad', { codigo: it.c, ubicacion: u, cantidad: q });
+  if (!r.ok) throw new Error(r.error || 'Error');
+  if (r.queued) localQty(it, u, q); else setLocs(it, r.ubs);
+  return !!r.queued;
 }
 async function addLoc() {
   const v = $('#locIn').value.replace(/\s+/g, ' ').trim().toUpperCase();
@@ -1762,12 +1876,13 @@ async function addLoc() {
   try {
     const qt = $('#locQ').value.trim(), qn = qt === '' ? null : Math.round(+qt);
     if (qt !== '' && (isNaN(qn) || qn < 0)) { $('#locErr').textContent = 'La cantidad debe ser un número'; return; }
-    const otros = (locIdx().get(v) || []).filter(i => i.c !== locItem.c); $('#locShare').hidden = true;
+    const otros = (locIdx().get(v) || []).filter(i => i.c !== locItem.c), yaTenia = (locItem.ubs || []).some(x => x.u === v); $('#locShare').hidden = true;
     const r = await apiQ('ubicacion_add', qn === null ? { codigo: locItem.c, ubicacion: v } : { codigo: locItem.c, ubicacion: v, cantidad: qn });
     if (!r.ok) throw new Error(r.error || 'Error');
     if (r.queued) { localAdd(locItem, v, undefined, qn === null ? undefined : qn); toast(QMSG, 3800); } else { setLocs(locItem, r.ubs); logLocal(locItem, v, 'agregada'); toast('Ubicación agregada'); }
     $('#locIn').value = ''; $('#locQ').value = ''; $('#locErr').textContent = '';
-    const sh = shareHTML(v, otros); $('#locShare').innerHTML = sh; $('#locShare').hidden = !sh;
+    UBI.locIdx = null;
+    const sh = locAviso(v, otros, yaTenia); $('#locShare').innerHTML = sh; $('#locShare').hidden = !sh;
   } catch (e) { $('#locErr').textContent = 'No se pudo guardar: ' + e.message; }
 }
 async function delLoc(u) {
@@ -2464,6 +2579,10 @@ function shareHTML(loc, otros) {
   const lista = otros.slice(0, 8).map(i => `<li>${esc(i.d)} <small style="color:var(--mute)">${esc(i.c)}</small></li>`).join('');
   return `<b>En ${esc(loc)} ya ${otros.length === 1 ? 'está 1 producto' : 'están ' + otros.length + ' productos'}:</b><ul style="margin:4px 0 0 18px;padding:0">${lista}</ul>` + (otros.length > 8 ? `<div>…y ${otros.length - 8} más</div>` : '');
 }
+// Aviso completo al agregar una ubicación: si este mismo producto ya la tenía y qué otros productos hay ahí
+function locAviso(loc, otros, yaTenia) {
+  return (yaTenia ? `<div><b>⚠ Este producto ya tenía la ubicación ${esc(loc)}.</b> No se duplicó: solo se actualizó (queda como la última).</div>` : '') + shareHTML(loc, otros);
+}
 const locCount = loc => (locIdx().get(loc) || []).length;
 const pendCount = loc => UBI.rows.filter(r => r.st === 'pend' && (!loc || r.loc === loc)).length;
 const plural = (n, a, b) => `${n} ${n === 1 ? a : b}`;
@@ -2766,7 +2885,8 @@ $('#loginClave').addEventListener('keydown', e => { if (e.key === 'Enter') doLog
 function enterApp() {
   document.body.classList.remove('locked');
   $('#sucName').textContent = sucInfo(SES.suc).nombre + (isMaster() ? '' : ' · ' + (SES.nombre || SES.usuario));   // el administrador de sucursal también muestra su nombre
-  $('#adminBtn').hidden = !isAdmin(); $('#resBtn').hidden = !isAdmin();
+  $('#adminBtn').hidden = !isAdmin(); $('#resBtn').hidden = !isAdmin(); $('#stkBtn').hidden = !isAdmin();
+  stkLoad().then(() => { mueStkAutoAll(); return stkRefresh(); }).then(ch => { if (ch && MUE.cur) drawMueDet(); });
   document.body.classList.toggle('ventas', isVentas());
   pushInit();
   OUT.items = []; OUT.key = ''; mueLoadLocal(); REC.user = isAdmin() ? '' : '__yo'; pedLoadCache(); LOCQ = null; copiedLoad(); REC.users = new Set(); REC.usersLoaded = false; REC.q = ''; $('#recQ').value = ''; CODEMAP = null;
@@ -2794,7 +2914,7 @@ $('#sucNo').addEventListener('click', () => $('#sucDlg').close());
 
 /* ---------- Muestreos (contar una categoría y guardar el avance) ---------- */
 const LMUE = {};   // id -> { id, nombre, usuario, inicio, estado, items: [{c, e: 'pend'|'ok'|'falta', u, t}], mod, dirty }
-const MUE = { cur: null, filt: 'pend', show: 60, user: '', remote: [], users: [], loadedOnce: false };
+const MUE = { cur: null, filt: 'pend', show: 60, user: '', remote: [], users: [], loadedOnce: false, tab: 'abiertos', q: '', mes: '', hist: [], histLoaded: false };
 const mueKey = () => 'bodega_mue_' + SES.suc + '_' + (SES.usuario || 'OWNER');
 function mueLoadLocal() {
   Object.keys(LMUE).forEach(k => delete LMUE[k]);
@@ -2821,7 +2941,7 @@ async function mueSend(m) {
   const mod = m.mod;
   if (MUE_INFL[m.id] !== undefined) return;      // ya hay un envío en camino; al terminar se manda lo más nuevo
   MUE_INFL[m.id] = mod;
-  const payload = { id: m.id, nombre: m.nombre, estado: m.estado, items: m.items.map(x => ({ c: x.c, e: x.e, u: x.u || '', t: x.t || 0, q: x.e === 'ok' && x.q != null ? x.q : null })), _mod: mod };
+  const payload = { id: m.id, nombre: m.nombre, estado: m.estado, items: m.items.map(x => ({ c: x.c, e: x.e, u: x.u || '', t: x.t || 0, q: x.e === 'ok' && x.q != null ? x.q : null, s: x.s == null ? null : x.s, sf: x.sf || 0 })), sf: m.sf || 0, _mod: mod };
   try {
     const r = await apiQ('muestreo_guardar', payload);
     if (!r.ok) throw new Error(r.error || 'Error');
@@ -2845,9 +2965,9 @@ async function muePull(id) {
     const j = await apiGet({ action: 'muestreo_get', id });
     const m2 = LMUE[id];
     if (!j.ok || !m2 || m2.dirty || MUE_INFL[id] || OUT.items.some(o => o.p && o.p.id === id)) return;
-    const items = j.items.map(x => ({ c: x.c, e: x.e, u: x.u || '', t: x.t ? Date.parse(x.t) : 0, q: x.q == null ? null : x.q }));
-    if (JSON.stringify(items) === JSON.stringify(m2.items.map(x => ({ c: x.c, e: x.e, u: x.u || '', t: x.t || 0, q: x.q == null ? null : x.q }))) && j.estado === m2.estado) return;
-    m2.items = items; m2.estado = j.estado; m2.nombre = j.nombre; mueSaveLocal();
+    const items = j.items.map(x => ({ c: x.c, e: x.e, u: x.u || '', t: x.t ? Date.parse(x.t) : 0, q: x.q == null ? null : x.q, s: x.s == null ? null : x.s, sf: Date.parse(x.sf) || 0 })), sf = Date.parse(j.sf) || 0;
+    if (JSON.stringify(items) === JSON.stringify(m2.items.map(x => ({ c: x.c, e: x.e, u: x.u || '', t: x.t || 0, q: x.q == null ? null : x.q, s: x.s == null ? null : x.s, sf: x.sf || 0 }))) && j.estado === m2.estado && sf === (m2.sf || 0)) return;
+    m2.items = items; m2.sf = sf; m2.estado = j.estado; m2.nombre = j.nombre; mueSaveLocal();
     if (MUE.cur === m2) drawMueDet();
     drawMueList();
   } catch (e) {}
@@ -2870,17 +2990,42 @@ async function mueLoadRemote() {
   MUE.loadedOnce = true; drawMueList();
   MUE.remote.forEach(h => { const m = LMUE[h.id]; if (m && !m.dirty && !MUE_INFL[h.id] && !(MUE.cur && MUE.cur.id === h.id) && (h.total !== m.items.length || h.revisados !== m.items.filter(x => x.e !== 'pend').length || h.estado !== m.estado)) muePull(h.id); });
 }
-function mueTab() { pedNext = Date.now() + PED_SEG * 1000; showMueList(); drawMueList(); mueLoadRemote(); }
+function mueTab() { pedNext = Date.now() + PED_SEG * 1000; showMueList(); drawMueList(); mueLoadRemote(); stkRefresh(); if (MUE.tab === 'hist') mueLoadHist(); }
 function showMueList() { MUE.cur = null; $('#mueListBox').hidden = false; $('#mueDet').hidden = true; }
 
-function mueRows() {
+const mueMesDe = ms => { const d = new Date(ms); return isNaN(d) || !ms ? '' : d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'); };
+const mueMesTxt = k => { const [y, m] = k.split('-'); const t = new Date(+y, +m - 1, 1).toLocaleDateString('es', { month: 'long', year: 'numeric' }); return t.charAt(0).toUpperCase() + t.slice(1); };
+// Todas las filas (sin filtrar por pestaña)
+function mueRowsAll() {
   const mine = Object.values(LMUE).map(m => { const s = mueStats(m); return { id: m.id, nombre: m.nombre, usuario: m.usuario, estado: m.estado, mod: m.mod, total: s.total, rev: s.rev, fa: s.fa, pe: s.pe, dirty: m.dirty }; });
   const have = new Set(mine.map(x => x.id));
-  const rem = MUE.remote.filter(h => !have.has(h.id)).map(h => ({ id: h.id, nombre: h.nombre, usuario: h.usuario, estado: h.estado, mod: Date.parse(h.mod) || 0, total: h.total, rev: h.revisados, fa: h.faltantes, pe: h.total - h.revisados, dirty: false }));
+  const rem = MUE.remote.concat(MUE.hist).filter(h => { if (have.has(h.id)) return false; have.add(h.id); return true; }).map(h => ({ id: h.id, nombre: h.nombre, usuario: h.usuario, estado: h.estado, mod: Date.parse(h.mod) || 0, total: h.total, rev: h.revisados, fa: h.faltantes, pe: h.total - h.revisados, dirty: false }));
   let all = mine.concat(rem);
   if (isAdmin()) { if (MUE.user) all = all.filter(x => x.usuario === MUE.user); }
   else all = all.filter(x => x.usuario === SES.usuario);
   return all.sort((a, b) => b.mod - a.mod);
+}
+function mueRows() {
+  const all = mueRowsAll();
+  if (MUE.tab !== 'hist') return all.filter(x => x.estado !== 'cerrado');
+  const q = nk(MUE.q.trim());
+  return all.filter(x => x.estado === 'cerrado' && (!MUE.mes || mueMesDe(x.mod) === MUE.mes) && (!q || nk(x.nombre + ' ' + x.usuario).includes(q)));
+}
+// El historial completo (todos los cerrados) se pide una vez al abrirlo, no en cada refresco
+async function mueLoadHist() {
+  if (!API_URL || navigator.onLine === false || !SES) return;
+  try { const j = await apiGet({ action: 'muestreos', todos: 1 }); if (j.ok) { MUE.hist = j.items || []; MUE.histLoaded = true; } } catch (e) {}
+  drawMueList();
+}
+function drawMueTabs() {
+  const all = mueRowsAll(), ab = all.filter(x => x.estado !== 'cerrado').length, hi = all.filter(x => x.estado === 'cerrado').length;
+  $('#mueTabs').innerHTML = [['abiertos', 'En curso', ab], ['hist', 'Historial', hi]].map(([k, t, n]) => `<button class="seg-b" data-mt="${k}" aria-pressed="${MUE.tab === k}">${t} ${n}</button>`).join('');
+  $('#mueHistBar').hidden = MUE.tab !== 'hist';
+  if (MUE.tab === 'hist') {
+    const meses = [...new Set(all.filter(x => x.estado === 'cerrado').map(x => mueMesDe(x.mod)).filter(Boolean))].sort().reverse();
+    if (MUE.mes && !meses.includes(MUE.mes)) MUE.mes = '';
+    $('#mueMes').innerHTML = '<option value="">Todos los meses</option>' + meses.map(k => `<option value="${k}"${k === MUE.mes ? ' selected' : ''}>${esc(mueMesTxt(k))}</option>`).join('');
+  }
 }
 function drawMueList() {
   if (!SES || $('#mueListBox').hidden) return;
@@ -2890,18 +3035,25 @@ function drawMueList() {
     sel.innerHTML = '<option value="">Todos los auxiliares</option>' + us.map(u => `<option value="${esc(u)}">${esc(u)}</option>`).join('');
     sel.value = MUE.user;
   }
-  const rows = mueRows();
+  drawMueTabs();
+  const rows = mueRows(), hist = MUE.tab === 'hist';
   $('#mueList').innerHTML = rows.length ? rows.map(r => {
     const pct = r.total ? Math.round(r.rev * 100 / r.total) : 0;
+    const puedeBorrar = r.estado !== 'cerrado' || isAdmin();
     return `<div class="mrow" data-id="${esc(r.id)}" tabindex="0" role="button">
       <div class="mmain"><b>${esc(r.nombre)}</b>
-        <small>${esc(mueFecha(r.mod))} · ${esc(r.usuario)}${r.dirty ? ' · sin enviar' : ''}</small>
+        <small>${r.estado === 'cerrado' ? 'Cerrado: ' : ''}${esc(mueFecha(r.mod))} · ${esc(r.usuario)}${r.dirty ? ' · sin enviar' : ''}</small>
         <div class="pbar"><i style="width:${pct}%"></i></div>
         <small>${r.rev} de ${r.total} contados (${pct}%) · ${r.pe} pendientes</small></div>
       <span class="tag ${r.estado === 'cerrado' ? 'good' : 'warn'}">${r.estado === 'cerrado' ? 'Cerrado' : 'Abierto'}</span>
-      <button class="mini del" data-mdel="${esc(r.id)}" aria-label="Borrar este muestreo">Borrar</button></div>`;
-  }).join('') : '<div class="empty-state"><h2>Aún no hay muestreos</h2><p>Toca «Iniciar muestreo», elige una categoría (faroles, brackets…) y empieza a contar.</p></div>';
+      ${puedeBorrar ? `<button class="mini del" data-mdel="${esc(r.id)}" aria-label="Borrar este muestreo">Borrar</button>` : ''}</div>`;
+  }).join('') : (hist
+    ? `<div class="empty-state"><h2>${MUE.histLoaded ? 'No hay muestreos en el historial' : 'Cargando el historial…'}</h2><p>Los muestreos que cierres quedan guardados aquí para consultarlos, imprimirlos o bajarlos en Excel.</p></div>`
+    : '<div class="empty-state"><h2>Aún no hay muestreos</h2><p>Toca «Iniciar muestreo», elige una categoría (faroles, brackets…) y empieza a contar. Los que cierres pasan al «Historial».</p></div>');
 }
+$('#mueTabs').addEventListener('click', e => { const b = e.target.closest('[data-mt]'); if (!b) return; MUE.tab = b.dataset.mt; drawMueList(); if (MUE.tab === 'hist' && !MUE.histLoaded) mueLoadHist(); });
+$('#mueQ').addEventListener('input', e => { MUE.q = e.target.value; drawMueList(); $('#mueQ').focus(); });
+$('#mueMes').addEventListener('change', e => { MUE.mes = e.target.value; drawMueList(); });
 $('#mueUser').addEventListener('change', e => { MUE.user = e.target.value; drawMueList(); });
 $('#mueList').addEventListener('click', e => {
   const del = e.target.closest('[data-mdel]');
@@ -2911,7 +3063,7 @@ $('#mueList').addEventListener('click', e => {
 $('#mueList').addEventListener('keydown', e => { if (e.key === 'Enter') { const r = e.target.closest('[data-id]'); if (r) mueOpen(r.dataset.id); } });
 async function mueDelete(id) {
   if (!confirm('¿Borrar este muestreo y todo su avance? No se puede deshacer.')) return;
-  clearTimeout(mueT[id]); delete LMUE[id]; MUE.remote = MUE.remote.filter(x => x.id !== id); mueSaveLocal(); drawMueList();
+  clearTimeout(mueT[id]); delete LMUE[id]; MUE.remote = MUE.remote.filter(x => x.id !== id); MUE.hist = MUE.hist.filter(x => x.id !== id); mueSaveLocal(); drawMueList();
   try { const r = await apiQ('muestreo_borrar', { id }); if (!r.ok) toast('No se pudo borrar en la nube: ' + (r.error || ''), 4000); } catch (e) { toast('No se pudo borrar: ' + e.message, 4000); }
 }
 
@@ -2923,13 +3075,15 @@ async function mueOpen(id) {
       const j = await apiGet({ action: 'muestreo_get', id });
       if (!j.ok) throw new Error(j.error || 'Error');
       m = LMUE[id] = { id, nombre: j.nombre, usuario: h ? h.usuario : (SES.usuario || 'OWNER'), inicio: Date.parse(h && h.inicio) || Date.now(), estado: j.estado,
-        items: j.items.map(x => ({ c: x.c, e: x.e, u: x.u || '', t: x.t ? Date.parse(x.t) : 0, q: x.q == null ? null : x.q })), mod: Date.parse(h && h.mod) || Date.now(), dirty: false };
+        items: j.items.map(x => ({ c: x.c, e: x.e, u: x.u || '', t: x.t ? Date.parse(x.t) : 0, q: x.q == null ? null : x.q, s: x.s == null ? null : x.s, sf: Date.parse(x.sf) || 0 })), sf: Date.parse(j.sf) || 0, mod: Date.parse(h && h.mod) || Date.now(), dirty: false };
       mueSaveLocal();
     } catch (e) { toast('No se pudo abrir (necesita internet): ' + e.message, 4000); return; }
   }
+  mueStkAuto(m);
   MUE.cur = m; MUE.filt = 'pend'; MUE.show = 60;
   $('#mueListBox').hidden = true; $('#mueDet').hidden = false; drawMueDet(); window.scrollTo(0, 0);
   if (m.dirty) mueSend(m); else muePull(id);
+  stkRefresh().then(ch => { if (ch && MUE.cur === m) drawMueDet(); });
 }
 $('#mueBack').addEventListener('click', () => { showMueList(); drawMueList(); });
 
@@ -2937,6 +3091,72 @@ function drawMueSub() {
   const m = MUE.cur; if (!m) return;
   $('#mueSub').textContent = `${m.items.length} productos · ${m.usuario}${m.estado === 'cerrado' ? ' · Cerrado' : ''}${m.dirty ? ' · sin enviar' : ' · guardado'}`;
 }
+/* ---------- Existencias del sistema (Excel de la empresa) ---------- */
+const STK = { t: 0, u: '', n: 0, nombre: '', m: new Map(), busy: false };
+const stkKey = () => 'stk:' + SES.suc;
+const stkQty = c => { const v = STK.m.get(String(c || '').trim().toUpperCase()); return v === undefined ? null : v; };
+function stkSet(t, u, n, nombre, pares, guardar) {
+  STK.t = t; STK.u = u || ''; STK.n = n || 0; STK.nombre = nombre || ''; STK.m = new Map(pares.map(a => [String(a[0]).trim().toUpperCase(), a[1]]));
+  if (guardar) kvSet(stkKey(), { t, u: STK.u, n: STK.n, nombre: STK.nombre, items: pares });
+}
+async function stkLoad() {
+  const k = stkKey(); STK.t = 0; STK.m = new Map(); STK.n = 0;
+  const v = await kvGet(k);
+  if (k !== stkKey() || !v || !v.t) return;
+  stkSet(v.t, v.u, v.n, v.nombre, v.items || [], false);
+}
+// Pregunta si hay existencias más nuevas. Si no hay nada nuevo la respuesta es mínima (rápida). Devuelve true si cambió algo.
+async function stkRefresh() {
+  if (!SES || !API_URL || navigator.onLine === false || STK.busy) return false;
+  STK.busy = true;
+  try {
+    const k = stkKey();
+    const j = await apiPost('stock_get', { desde: STK.t });
+    if (k !== stkKey() || !j || !j.ok || !j.hay || !j.items || j.t === STK.t) return false;
+    stkSet(j.t, j.u, j.n, j.nombre, j.items, true);
+    mueStkAutoAll();
+    return true;
+  } catch (e) { return false; } finally { STK.busy = false; }
+}
+const stkCuando = ms => { const d = new Date(ms); return `${fFecha(d)} ${fHora(d)}`; };
+const stkCorta = ms => { const d = new Date(ms); return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getFullYear()).slice(-2)}`; };
+// Si hay un Excel de existencias más nuevo, los productos que aún no se cuentan toman la cantidad nueva (los ya contados conservan la que tenían al contarlos).
+function mueStkAuto(m) {
+  if (!STK.t || !m || m.estado === 'cerrado') return false;
+  let ch = false;
+  m.items.forEach(x => {
+    if (x.e === 'ok' || (x.sf || m.sf || 0) >= STK.t) return;
+    const q = stkQty(x.c); if (q === null) return;
+    x.s = q; x.sf = STK.t; ch = true;
+  });
+  if (ch) { m.sf = STK.t; mueTouch(m); }
+  return ch;
+}
+function mueStkAutoAll() { let ch = false; Object.values(LMUE).forEach(m => { if (mueStkAuto(m)) ch = true; }); if (ch && MUE.cur) drawMueDet(); return ch; }
+function drawMueStk(m) {
+  const box = $('#mueStk');
+  if (!m.sf && !STK.t) { box.hidden = true; return; }
+  box.hidden = false;
+  let t;
+  if (m.sf || m.items.some(x => x.sf)) {
+    let falta = 0, viejos = 0; m.items.forEach(x => { if (x.e !== 'ok' && x.s > 0) falta += x.s; if ((x.sf || m.sf || 0) < STK.t) viejos++; });
+    const ult = Math.max(m.sf || 0, ...m.items.map(x => x.sf || 0));
+    t = `<span>Existencias del sistema al <b>${esc(stkCuando(ult))}</b>` + (falta ? ` · por buscar según el sistema: <b>${falta} PCS</b>` : '') + '</span>';
+    t += viejos ? `<button class="mini" id="stkApply">Actualizar también los ya contados (carga del ${esc(stkCorta(STK.t))})</button>` : `<button class="mini" id="stkApply">Revisar si hay nuevas</button>`;
+  } else t = `<span>Este muestreo no tiene existencias del sistema.</span><button class="mini" id="stkApply">Agregar existencias del ${esc(stkCuando(STK.t))}</button>`;
+  box.innerHTML = t;
+}
+$('#mueStk').addEventListener('click', async e => {
+  if (!e.target.closest('#stkApply')) return;
+  const m = MUE.cur; if (!m) return;
+  const b = e.target.closest('#stkApply'); b.disabled = true; b.textContent = 'Buscando…';
+  await stkRefresh();
+  if (MUE.cur !== m) return;
+  if (!STK.t) { toast('Todavía no hay existencias cargadas. El administrador debe subir el Excel.', 4200); drawMueStk(m); return; }
+  if (m.items.every(x => (x.sf || m.sf || 0) >= STK.t)) { toast('Ya tienes las existencias más nuevas', 3000); drawMueStk(m); return; }
+  m.items.forEach(x => { const q = stkQty(x.c); if (q !== null) { x.s = q; x.sf = STK.t; } }); m.sf = STK.t; mueTouch(m); drawMueDet();
+  toast('Existencias actualizadas al ' + stkCuando(STK.t), 3500);
+});
 function drawMueDet() {
   const m = MUE.cur; if (!m) return;
   const s = mueStats(m), pct = s.total ? Math.round(s.rev * 100 / s.total) : 0;
@@ -2944,6 +3164,7 @@ function drawMueDet() {
   $('#muePbar').style.width = pct + '%';
   $('#mueStats').innerHTML = `<span class="tag good">${s.ok} contados</span><span class="tag">${s.pe} pendientes</span>${s.pz ? `<span class="tag good">${s.pz} PCS contadas</span>` : ''}<b>${pct}%</b>`;
   $('#mueClose').textContent = m.estado === 'cerrado' ? 'Reabrir muestreo' : 'Cerrar muestreo';
+  drawMueStk(m);
   $('#mueSeg').innerHTML = [['pend', 'Pendientes', s.pe], ['ok', 'Contados', s.ok], ['todos', 'Todos', s.total]]
     .map(([k, t, n]) => `<button class="seg-b" data-f="${k}" aria-pressed="${MUE.filt === k}">${t} ${n}</button>`).join('');
   if (MUE.filt === 'falta') MUE.filt = 'pend';
@@ -2953,10 +3174,13 @@ function drawMueDet() {
   $('#mueItems').innerHTML = part.length ? '<div class="mbox">' + part.map(x => {
     const it = CODEMAP_get(x.c), ub = it && it.u ? it.u : x.u;
     const bins = it && it.ubs && it.ubs.length ? it.ubs.slice().reverse().slice(0, 3).map((b, k) => `<span class="lc"><span class="bin${k ? ' old' : ''}">${esc(b.u)}</span>${cpBtn(b.u, 'u|' + x.c + '|' + b.u, 'sm')}</span>`).join('') : '<span class="bin none">Sin ubicación</span>';
+    const sfx = x.sf || m.sf || 0;
+    const sis = !sfx ? '' : x.s == null ? '<span class="tag">No venía en el Excel del sistema</span>' : `<span class="tag warn">En sistema: ${x.s} PCS al ${esc(stkCorta(sfx))}</span>`;
+    const dif = sfx && x.e === 'ok' && x.q != null && x.s != null ? (x.q === x.s ? '<span class="tag good">Cuadra</span>' : `<span class="tag bad">Diferencia ${x.q - x.s > 0 ? '+' : ''}${Math.round((x.q - x.s) * 100) / 100}</span>`) : '';
     const acts = x.e !== 'ok'
       ? `<button class="mb ok" data-mq="${esc(x.c)}">Poner cantidad</button><button class="mini" data-ml="${esc(x.c)}">Cambiar ubicación</button>`
       : `<span class="tag good">${x.q != null ? x.q + ' PCS' : 'Contado'}</span><button class="mini" data-mq="${esc(x.c)}">Cambiar</button><button class="mini" data-ml="${esc(x.c)}">Cambiar ubicación</button><button class="mini" data-me="pend" data-c="${esc(x.c)}">Deshacer</button>`;
-    return `<div class="mit"><div><b>${esc(it ? it.d : x.c)}</b><small>${esc(x.c)}</small><div class="bins">${bins}</div></div><div class="acts">${acts}</div></div>`;
+    return `<div class="mit"><div><b>${esc(it ? it.d : x.c)}</b><small>${esc(x.c)}</small><div class="bins">${sis}${dif}${bins}</div></div><div class="acts">${acts}</div></div>`;
   }).join('') + '</div>' : `<div class="empty-state"><h2>${MUE.filt === 'pend' ? (s.total ? '¡No quedan pendientes!' : 'Muestreo vacío') : 'Nada por aquí'}</h2></div>`;
   $('#mueMore').hidden = list.length <= MUE.show;
 }
@@ -2975,7 +3199,19 @@ async function mueEsta(c, editar) {
   const m = MUE.cur; if (!m) return;
   const x = m.items.find(y => y.c === c); if (!x) return;
   const it = CODEMAP_get(c);
-  const a = await askQty('¿Cuántas hay?', (it ? it.d : c) + (it && it.u ? ' · ' + it.u : ''), x.q, true);
+  const a = await askQty('¿Cuántas hay?', (it ? it.d : c) + (it && it.u ? ' · ' + it.u : ''), x.q, true, it ? {
+    it,
+    add: (u, q) => locAddFor(it, u, q),
+    del: u => locDelFor(it, u),
+    commit: async pend => {
+      for (const u of Object.keys(pend)) {
+        const y = (it.ubs || []).find(z => z.u === u); if (!y) continue;
+        const t = pend[u], q = t === '' ? null : Math.round(+t);
+        if (q !== null && (isNaN(q) || q < 0 || q > 999999)) throw new Error('Cantidad no válida en ' + u);
+        if (q !== qOf(y)) await locQtyFor(it, u, q);
+      }
+    }
+  } : null);
   if (!a) return;                       // cancelar: no cambia nada
   mueMark(c, 'ok', a.q);
 }
@@ -2992,6 +3228,99 @@ $('#mueClose').addEventListener('click', () => {
   m.estado = m.estado === 'cerrado' ? 'abierto' : 'cerrado'; mueTouch(m); drawMueDet();
   toast(m.estado === 'cerrado' ? 'Muestreo cerrado' : 'Muestreo reabierto');
 });
+
+/* ---------- Imprimir y Excel de un muestreo (carta horizontal) ---------- */
+function mueDoc(m) {
+  const rows = m.items.map((x, i) => {
+    const it = CODEMAP_get(x.c);
+    const ub = it && it.ubs && it.ubs.length ? it.ubs.slice().reverse().slice(0, 3).map(b => b.u + (b.q != null ? ' (' + b.q + ' PCS)' : '')).join(' / ') : (x.u || 'SIN UBICACIÓN');
+    const ok = x.e === 'ok', q = ok && x.q != null ? x.q : null, sv = x.s == null ? null : x.s;
+    return { n: i + 1, c: x.c, d: it ? it.d : x.c, ub, s: sv, t: ok && x.t ? x.t : 0, ok, q, dif: q !== null && sv !== null ? Math.round((q - sv) * 100) / 100 : null };
+  });
+  const st = mueStats(m), ult = Math.max(m.sf || 0, ...m.items.map(x => x.sf || 0));
+  const pzSis = rows.reduce((a, r) => a + (r.s || 0), 0), pzCont = rows.reduce((a, r) => a + (r.q || 0), 0);
+  const difs = rows.filter(r => r.dif !== null && r.dif !== 0).length, cuadran = rows.filter(r => r.dif === 0).length;
+  const f = new Date();
+  return {
+    rows, st, ult, pzSis, pzCont, difs, cuadran, f,
+    title: m.nombre,
+    l1: `${sucInfo(SES.suc).nombre} · Auxiliar: ${m.usuario} · Inicio: ${mueFecha(m.inicio)} · ${m.estado === 'cerrado' ? 'Cerrado' : 'Abierto'}`,
+    l2: ult ? `Cantidad del sistema al ${stkCuando(ult)}` : 'Sin existencias del sistema en este muestreo',
+    l3: `Contados ${st.ok} de ${st.total} · ${st.pe} pendientes · ${pzCont} PCS contadas` + (ult ? ` · ${difs} con diferencia · ${cuadran} cuadran` : ''),
+    nombreArchivo: 'Muestreo - ' + m.nombre.replace(/[\\/:*?"<>|]+/g, ' ').trim() + ' - ' + f.getFullYear() + '-' + String(f.getMonth() + 1).padStart(2, '0') + '-' + String(f.getDate()).padStart(2, '0')
+  };
+}
+const fCorta = ms => { const d = new Date(ms); return `${fFecha(d)} ${fHora(d)}`; };
+function mueImprimir(m) {
+  const d = mueDoc(m);
+  let a = document.getElementById('printArea'); if (a) a.remove();
+  a = document.createElement('div'); a.id = 'printArea'; a.className = 'mue';
+  a.innerHTML = `<div class="mh"><div><h1>${esc(d.title)}</h1><p class="mm">${esc(d.l1)}<br>${esc(d.l2)}</p></div></div>
+    <table class="mt"><colgroup><col style="width:4%"><col style="width:17%"><col style="width:31%"><col style="width:15%"><col style="width:9%"><col style="width:11%"><col style="width:7%"><col style="width:6%"></colgroup>
+    <thead><tr><th>N°</th><th>CODIGO</th><th>DESCRIPCION</th><th>UBICACION</th><th>CANTIDAD SISTEMA</th><th>FECHA</th><th>CONTEO</th><th>DIF.</th></tr></thead><tbody>` +
+    d.rows.map(r => `<tr><td class="n">${r.n}</td><td class="cod">${esc(r.c)}</td><td>${esc(r.d)}</td><td>${esc(r.ub)}</td><td class="c">${r.s === null ? '' : r.s}</td><td class="f"></td>` +
+      `<td class="q">${r.ok ? (r.q !== null ? r.q : '✓') : ''}</td>` +
+      `<td class="d">${r.dif === null ? '' : (r.dif > 0 ? '+' : '') + r.dif}</td></tr>`).join('') +
+    `</tbody><tfoot><tr><td colspan="4" style="text-align:right">TOTAL</td><td class="c">${d.ult ? d.pzSis : ''}</td><td></td><td class="q">${d.pzCont}</td><td></td></tr></tfoot></table>
+    <div class="mfoot">Multipart Bodega · ${esc(d.title)} · impreso el ${esc(fCorta(d.f.getTime()))}</div>`;
+  const stl = document.createElement('style'); stl.id = 'pgStyle'; stl.textContent = '@page{size:letter landscape;margin:9mm 10mm 12mm;@bottom-right{content:"Página " counter(page) " de " counter(pages);font:8pt Cambria,Georgia,serif;color:#000}}'; document.head.appendChild(stl);
+  document.body.appendChild(a); document.body.classList.add('printing');
+  const fin = () => { document.body.classList.remove('printing'); const t = document.getElementById('pgStyle'); if (t) t.remove(); window.removeEventListener('afterprint', fin); };
+  window.addEventListener('afterprint', fin);
+  setTimeout(() => { try { window.print(); } catch (e) { fin(); toast('Este navegador no puede imprimir', 3500); } }, 120);
+}
+const EXCELJS_URL = 'https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js';
+function loadExcelJS() {
+  return new Promise((res, rej) => {
+    if (window.ExcelJS) return res(window.ExcelJS);
+    const sc = document.createElement('script'); sc.src = EXCELJS_URL; sc.onload = () => res(window.ExcelJS); sc.onerror = () => rej(new Error('No se pudo cargar el generador de Excel. Revisa tu internet e inténtalo de nuevo.'));
+    document.head.appendChild(sc);
+  });
+}
+async function mueExcel(m) {
+  const d = mueDoc(m), b = $('#mueXls'); b.disabled = true; const t0 = b.textContent; b.textContent = 'Preparando…';
+  try {
+    const EJ = await loadExcelJS(), wb = new EJ.Workbook(); wb.creator = 'Multipart Bodega'; wb.created = new Date();
+    const HR = 5, ws = wb.addWorksheet('Muestreo', { views: [{ state: 'frozen', ySplit: HR, showGridLines: false }] });
+    const COLS = ['N°', 'CODIGO', 'DESCRIPCION', 'UBICACION', 'CANTIDAD SISTEMA', 'FECHA', 'CONTEO', 'DIFERENCIA'], W = [6, 24, 54, 24, 14, 16, 12, 13];
+    const FN = 'Cambria', NEGRO = 'FF000000', BLANCO = 'FFFFFFFF', GRIS = 'FFF0F0F0', GRIS2 = 'FFD9D9D9', thin = { style: 'thin', color: { argb: NEGRO } };
+    ws.columns = W.map(w => ({ width: w }));
+    const box = { top: thin, left: thin, bottom: thin, right: thin }, fill = argb => ({ type: 'pattern', pattern: 'solid', fgColor: { argb } });
+    // Encabezado del documento (blanco y negro)
+    ws.mergeCells('A1:H1'); const c1 = ws.getCell('A1'); c1.value = d.title; c1.font = { name: FN, size: 18, bold: true, color: { argb: BLANCO } }; c1.fill = fill(NEGRO); c1.alignment = { vertical: 'middle', indent: 1 }; ws.getRow(1).height = 32;
+    [[2, d.l1], [3, d.l2]].forEach(([r, t]) => { ws.mergeCells(`A${r}:H${r}`); const c = ws.getCell(`A${r}`); c.value = t; c.font = { name: FN, size: 11, color: { argb: NEGRO } }; c.alignment = { vertical: 'middle', indent: 1 }; ws.getRow(r).height = 19; });
+    ws.getRow(4).height = 8;
+    // Encabezado de la tabla
+    const hr = ws.getRow(HR); COLS.forEach((t, i) => { const c = hr.getCell(i + 1); c.value = t; c.font = { name: FN, size: 11, bold: true, color: { argb: BLANCO } }; c.fill = fill(NEGRO); c.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true }; c.border = box; }); hr.height = 30;
+    // Filas. La FECHA queda vacía: la escribe a mano el auxiliar.
+    d.rows.forEach((r, i) => {
+      const rn = HR + 1 + i, row = ws.getRow(rn);
+      const vals = [r.n, r.c, r.d, r.ub, r.s === null ? null : r.s, null, r.ok ? (r.q !== null ? r.q : 'Contado') : null, { formula: `IF(AND(ISNUMBER(E${rn}),ISNUMBER(G${rn})),G${rn}-E${rn},"")`, result: r.dif === null ? '' : r.dif }];
+      vals.forEach((v, k) => {
+        const c = row.getCell(k + 1); if (v !== null) c.value = v;
+        c.border = box; c.font = { name: FN, size: 11, bold: k === 6 || k === 7 };
+        c.alignment = { vertical: 'middle', horizontal: k === 2 || k === 3 ? 'left' : 'center', wrapText: k === 2 || k === 3 };
+        if (i % 2) c.fill = fill(GRIS);
+      });
+      row.getCell(6).numFmt = 'dd/mm/yyyy'; row.getCell(5).numFmt = '#,##0.##'; row.getCell(7).numFmt = '#,##0.##'; row.getCell(8).numFmt = '+#,##0.##;-#,##0.##;0';
+      row.height = Math.max(22, 16 * Math.max(Math.ceil(r.d.length / 52), Math.ceil(r.ub.length / 24)));
+    });
+    const last = HR + d.rows.length, tr = ws.getRow(last + 1), tn = last + 1;
+    ws.mergeCells(`A${tn}:D${tn}`); tr.getCell(1).value = 'TOTAL'; tr.getCell(1).alignment = { horizontal: 'right', vertical: 'middle' };
+    tr.getCell(5).value = { formula: `SUM(E${HR + 1}:E${last})`, result: d.pzSis }; tr.getCell(7).value = { formula: `SUM(G${HR + 1}:G${last})`, result: d.pzCont };
+    for (let k = 1; k <= 8; k++) { const c = tr.getCell(k); c.font = { name: FN, size: 11, bold: true, color: { argb: NEGRO } }; c.fill = fill(GRIS2); c.border = { top: { style: 'medium', color: { argb: NEGRO } }, bottom: thin, left: thin, right: thin }; if (k > 1) c.alignment = { horizontal: 'center', vertical: 'middle' }; }
+    tr.height = 24;
+    if (d.rows.length) ws.autoFilter = { from: { row: HR, column: 1 }, to: { row: last, column: 8 } };
+    // Carta horizontal, ajustado al ancho, con el encabezado repetido en cada hoja
+    ws.pageSetup = { paperSize: 1, orientation: 'landscape', fitToPage: true, fitToWidth: 1, fitToHeight: 0, horizontalCentered: true, printTitlesRow: `${HR}:${HR}`, printArea: `A1:H${tn}`, margins: { left: 0.4, right: 0.4, top: 0.5, bottom: 0.6, header: 0.25, footer: 0.3 } };
+    ws.headerFooter.oddFooter = '&L&"Cambria,Regular"&8Multipart Bodega&C&"Cambria,Regular"&8Página &P de &N&R&"Cambria,Regular"&8Impreso: &D';
+    const buf = await wb.xlsx.writeBuffer();
+    bajar(new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }), d.nombreArchivo + '.xlsx'); toast('Excel descargado', 2500);
+  } catch (e) { toast(e.message || 'No se pudo crear el Excel', 4500); }
+  b.disabled = false; b.textContent = t0;
+}
+$('#mueXls').addEventListener('click', () => { if (MUE.cur) mueExcel(MUE.cur); });
+$('#muePrint').addEventListener('click', () => { if (MUE.cur) mueImprimir(MUE.cur); });
 $('#mueScan').addEventListener('click', () => { if (MUE.cur) openScanner('mues', ''); });
 function muesRead(text) {
   const m = MUE.cur; if (!m) return;
@@ -2999,8 +3328,14 @@ function muesRead(text) {
   let msg, cls;
   if (!it) { msg = `✕ No está en el catálogo: ${t}`; cls = 'bad'; beep(260, 1, 0.25); vib(260); }
   else {
-    const x = m.items.find(y => y.c === it.c);
-    if (!x) { msg = `⚠ No es de este muestreo: ${it.d}`; cls = 'warn'; beep(520, 2); vib([90, 70, 90]); }
+    let x = m.items.find(y => y.c === it.c);
+    if (!x && m.estado === 'cerrado') { msg = `⚠ No es de este muestreo y está cerrado: ${it.d}`; cls = 'warn'; beep(520, 2); vib([90, 70, 90]); }
+    else if (!x) {
+      // El muestreo no lo traía (a veces se omiten códigos): se agrega solo y se pide la cantidad
+      m.items.unshift({ c: it.c, e: 'pend', u: '', t: 0, q: null, s: stkQty(it.c), sf: STK.t || 0 }); mueTouch(m); drawMueDet();
+      msg = `➕ No estaba en el muestreo, se agregó: ${it.d}`; cls = 'warn'; beep(900, 2); vib([60, 60, 60]); toast('Producto agregado al muestreo: ' + it.d, 3500);
+      setTimeout(() => mueEsta(it.c), 150);
+    }
     else if (x.e === 'ok') { msg = `ℹ Ya estaba marcado: ${it.d}`; cls = 'warn'; beep(700, 1); vib(60); }
     else { msg = `✓ Escribe la cantidad: ${it.d}`; cls = 'ok'; beep(1100, 1); vib(70); setTimeout(() => mueEsta(it.c), 150); }
   }
@@ -3036,6 +3371,7 @@ function mnInfo() {
 }
 function openMueNew() {
   if (!IDX.length) { toast('El catálogo aún no carga'); return; }
+  stkRefresh();   // trae las existencias más nuevas (si el Excel cambió) mientras eliges la categoría
   MN.cat = ''; MN.q = ''; MN.auto = true; $('#mnFind').value = ''; $('#mnQ').value = ''; $('#mnName').value = '';
   mnDrawCats(); mnInfo(); $('#mueNewDlg').showModal();
 }
@@ -3052,10 +3388,86 @@ $('#mnOk').addEventListener('click', () => {
   if (its.length > 2000) { mnInfo(); return; }
   const id = 'M' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
   const m = LMUE[id] = { id, nombre: ($('#mnName').value.trim() || 'Muestreo').slice(0, 80), usuario: SES.usuario || 'OWNER', inicio: Date.now(), estado: 'abierto',
-    items: its.map(it => ({ c: it.c, e: 'pend', u: '', t: 0, q: null })), mod: Date.now(), dirty: true };
+    items: its.map(it => ({ c: it.c, e: 'pend', u: '', t: 0, q: null, s: stkQty(it.c), sf: STK.t || 0 })), sf: STK.t || 0, mod: Date.now(), dirty: true };
   mueSaveLocal(); mueTouch(m); $('#mueNewDlg').close();
   MUE.cur = m; MUE.filt = 'pend'; MUE.show = 60; $('#mueListBox').hidden = true; $('#mueDet').hidden = false; drawMueDet(); window.scrollTo(0, 0);
   toast(`Muestreo iniciado: ${its.length} productos`);
+});
+
+/* ---- Cargar el Excel de existencias del sistema (administrador) ---- */
+const SK = { rows: [], nombre: '', busy: false };
+function stkParse(XL, buf) {
+  const wb = XL.read(buf, { type: 'array' }), ws = wb.Sheets[wb.SheetNames[0]];
+  if (!ws || !ws['!ref']) throw new Error('El Excel está vacío');
+  const T = XL.utils.sheet_to_json(ws, { header: 1, raw: false, blankrows: true, defval: '' });
+  const R = XL.utils.sheet_to_json(ws, { header: 1, raw: true, blankrows: true, defval: '' });
+  let h = -1, cc = -1;
+  for (let i = 0; i < Math.min(T.length, 60) && h < 0; i++) T[i].forEach((v, j) => { if (h < 0 && /^(codigo|cod|codigo de producto|codigo producto|code|sku|item|clave|referencia)$/.test(xlsLimpia(v))) { h = i; cc = j; } });
+  if (h < 0) throw new Error('No encontré la columna «CODIGO». Revisa que el Excel tenga los encabezados CODIGO, DESCRIPCION y CANTIDAD.');
+  const H = T[h].map(xlsLimpia);
+  const cd = H.findIndex(x => /^(descripcion|detalle|producto|nombre|description|articulo)/.test(x));
+  const cq = H.findIndex(x => /^(cantidad|cant|can$|existencia|exist|stock|saldo|disponible|inventario|qty|total|pcs|piezas|unidades)/.test(x));
+  if (cq < 0) throw new Error('No encontré la columna de cantidad. Ponle de encabezado CANTIDAD, EXISTENCIA, STOCK o SALDO.');
+  const mp = new Map(); let rep = 0, vacias = 0, sinCant = 0;
+  for (let i = h + 1; i < T.length && vacias < 8; i++) {
+    const c = String(T[i][cc] == null ? '' : T[i][cc]).trim();
+    if (!c) { vacias++; continue; } vacias = 0;
+    if (/^(codigo|cod)$/.test(xlsLimpia(c))) continue;
+    let q = R[i] ? R[i][cq] : '';
+    if (typeof q !== 'number') { const m = String(q == null ? '' : q).replace(/[, ]/g, '').match(/-?\d+(\.\d+)?/); q = m ? +m[0] : null; }
+    if (q == null || isNaN(q)) { sinCant++; continue; }
+    q = Math.round(q * 100) / 100;
+    const d = cd >= 0 ? String(T[i][cd] == null ? '' : T[i][cd]).replace(/\s+/g, ' ').trim().slice(0, 120) : '';
+    const k = c.toUpperCase().slice(0, 60);
+    if (mp.has(k)) { const o = mp.get(k); o.q = Math.round((o.q + q) * 100) / 100; if (!o.d) o.d = d; rep++; } else mp.set(k, { c: c.slice(0, 60), d, q });
+  }
+  return { rows: [...mp.values()], rep, sinCant, colCant: String(T[h][cq]).trim() };
+}
+function drawStkInfo() {
+  $('#stkInfo').innerHTML = STK.t ? `Última carga: <b>${esc(stkCuando(STK.t))}</b> · ${STK.n || STK.m.size} productos${STK.u ? ' · por ' + esc(STK.u) : ''}${STK.nombre ? ' · ' + esc(STK.nombre) : ''}` : 'Todavía no hay existencias cargadas en esta sucursal.';
+}
+$('#stkBtn').addEventListener('click', () => {
+  SK.rows = []; SK.busy = false; $('#stkFile').value = ''; $('#stkMsg').textContent = ''; $('#stkPrev').innerHTML = ''; $('#stkGo').hidden = true; $('#stkGo').disabled = false;
+  drawStkInfo(); $('#stkDlg').showModal();
+  stkRefresh().then(ch => { if (ch) drawStkInfo(); });
+});
+$('#stkNo').addEventListener('click', () => { if (!SK.busy) $('#stkDlg').close(); });
+$('#stkDlg').addEventListener('cancel', e => { if (SK.busy) e.preventDefault(); });
+$('#stkFile').addEventListener('change', async e => {
+  const f = e.target.files[0]; if (!f) return; const m = $('#stkMsg');
+  m.textContent = 'Leyendo el Excel…'; $('#stkGo').hidden = true; $('#stkPrev').innerHTML = ''; SK.rows = [];
+  try {
+    const XL = await loadXlsx(), r = stkParse(XL, await f.arrayBuffer());
+    if (!r.rows.length) throw new Error('No encontré productos con cantidad debajo de los encabezados.');
+    SK.rows = r.rows; SK.nombre = f.name.replace(/\.[^.]+$/, '').slice(0, 80);
+    const set = new Set(r.rows.map(x => x.c.toUpperCase())), coinciden = IDX.reduce((n, it) => n + (set.has(String(it.c).trim().toUpperCase()) ? 1 : 0), 0);
+    m.innerHTML = `<b>${r.rows.length}</b> productos leídos · cantidad tomada de la columna «${esc(r.colCant)}»` + (r.rep ? ` · ${r.rep} códigos repetidos (se sumaron)` : '') + (r.sinCant ? ` · ${r.sinCant} filas sin cantidad (se omitieron)` : '');
+    const omit = IDX.length - coinciden, fuera = r.rows.length - coinciden;
+    $('#stkPrev').innerHTML = `<p class="soft"><b>${coinciden}</b> de ${IDX.length} productos de tu catálogo tienen existencia en este Excel.` + (omit > 0 ? ` <b>${omit}</b> no vienen en el Excel: igual aparecerán en los muestreos, sin cantidad de sistema.` : '') + (fuera > 0 ? ` ${fuera} códigos del Excel no están en tu catálogo (se ignoran; este Excel no agrega productos).` : '') + '</p>' +
+      '<div class="mbox" style="max-height:30dvh;overflow-y:auto">' + r.rows.slice(0, 8).map(x => `<div class="pit"><div class="pmain"><b>${esc(x.d || x.c)}</b><small>${esc(x.c)}</small></div><span class="tag warn">${x.q}</span></div>`).join('') + '</div>' +
+      (r.rows.length > 8 ? `<p class="soft">…y ${r.rows.length - 8} más</p>` : '');
+    $('#stkGo').hidden = false;
+  } catch (err) { m.textContent = err instanceof NetErr ? 'Sin internet' : err.message; }
+});
+$('#stkGo').addEventListener('click', async () => {
+  if (SK.busy || !SK.rows.length) return;
+  if (navigator.onLine === false) { $('#stkMsg').textContent = 'Necesitas internet para cargar las existencias.'; return; }
+  SK.busy = true; const b = $('#stkGo'); b.disabled = true; $('#stkNo').disabled = true; $('#stkFile').disabled = true;
+  const rows = SK.rows, m = $('#stkMsg'), TAN = 3000; let hecho = 0, t = 0;
+  try {
+    for (let i = 0; i < rows.length || i === 0; i += TAN) {
+      const parte = rows.slice(i, i + TAN), fin = i + TAN >= rows.length;
+      m.textContent = `Subiendo… ${Math.min(i + parte.length, rows.length)} de ${rows.length}`;
+      const j = await apiReintenta('stock_cargar', { filas: parte.map(x => ({ c: x.c, d: x.d, q: x.q })), primero: i === 0, fin, nombre: SK.nombre }, 4);
+      if (!j || !j.ok) throw new Error((j && j.error) || 'Error');
+      hecho += j.guardados || 0; if (fin) t = j.t;
+    }
+    stkSet(t || Date.now(), SES.usuario || 'OWNER', hecho, SK.nombre, rows.map(x => [x.c, x.q]), true);
+    m.textContent = `Listo: ${hecho} productos cargados. Los muestreos nuevos ya usan estas existencias.`; $('#stkGo').hidden = true; $('#stkPrev').innerHTML = ''; SK.rows = []; $('#stkFile').value = '';
+    drawStkInfo(); mueStkAutoAll(); if (MUE.cur) drawMueDet();
+  } catch (err) {
+    m.textContent = (err instanceof NetErr ? 'Se cortó el internet' : err.message) + '. No se terminó de cargar: los teléfonos siguen usando las existencias anteriores. Vuelve a intentarlo.'; b.disabled = false;
+  } finally { SK.busy = false; $('#stkNo').disabled = false; $('#stkFile').disabled = false; }
 });
 
 /* ---------- Menú Admin (solo clave maestra): auxiliares y pasar fotos/productos entre sucursales ---------- */
