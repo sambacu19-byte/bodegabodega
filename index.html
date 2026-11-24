@@ -97,6 +97,7 @@ button{cursor:pointer}
 .info h3{font:700 14.5px/1.35 var(--sans);overflow-wrap:anywhere;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
 .idline{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:12px;flex-wrap:wrap}
 .code{font:500 11px/1.2 var(--mono);color:var(--mute);overflow-wrap:anywhere}
+.stkq{font:500 11px/1.2 var(--mono);color:var(--mute);margin-top:6px}
 .locwrap{display:inline-flex;align-items:center;gap:6px}
 .qn{display:inline-block;margin-left:6px;color:var(--text);font:700 12px var(--mono)}
 .qin{width:84px;height:38px;border-radius:10px;border:1px solid var(--line);background:var(--bg2,#120e24);color:var(--text);padding:0 10px;font:600 15px var(--sans);text-align:center}
@@ -452,22 +453,24 @@ body{overflow-x:hidden}
   #printArea,#printArea *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
   #printArea.mue{font-size:9pt;font-family:Cambria,'Times New Roman',Georgia,serif;color:#000}
   #printArea.mue *{font-family:Cambria,'Times New Roman',Georgia,serif!important}
-  #printArea.mue .mh{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;border-bottom:1px solid #000;padding-bottom:6px;margin-bottom:8px}
-  #printArea.mue h1{font-size:18pt;margin:0 0 2px;color:#000}
-  #printArea.mue .mm{margin:0;color:#000;font-size:9pt;line-height:1.45}
-  #printArea.mue .mst{display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end;max-width:46%}
-  #printArea.mue .mst span{border:1px solid #000;background:#fff;color:#000;border-radius:99px;padding:2px 8px;font-weight:700;font-size:8pt;white-space:nowrap}
-  #printArea.mue table.mt{width:100%;border-collapse:collapse;table-layout:fixed}
+  #printArea.mue .mh{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;border-bottom:2px solid #000;padding-bottom:5px;margin-bottom:7px}
+  #printArea.mue h1{font-size:16pt;margin:0 0 2px;color:#000;letter-spacing:.01em}
+  #printArea.mue .mm{margin:0;color:#000;font-size:8.5pt;line-height:1.4}
+  #printArea.mue table.mt{width:100%;border-collapse:collapse;table-layout:auto;border:1.2pt solid #000}
   #printArea.mue table.mt thead{display:table-header-group}
-  #printArea.mue table.mt th{background:#fff;color:#000;font-size:8.5pt;text-align:center;padding:5px 4px;border:1px solid #000;letter-spacing:.02em}
-  #printArea.mue table.mt td{padding:3.5px 5px;border:1px solid #000;vertical-align:middle;font-size:9pt;height:7.5mm;background:#fff}
-    #printArea.mue table.mt tr{break-inside:avoid;page-break-inside:avoid}
-  #printArea.mue td.n,#printArea.mue td.c,#printArea.mue td.f{text-align:center}
-  #printArea.mue td.cod{font-size:8.5pt;word-break:break-all}
-  #printArea.mue td.q,#printArea.mue td.d{text-align:center;font-weight:700}
+  #printArea.mue table.mt th{background:#fff;color:#000;font-size:7.5pt;font-weight:700;text-align:center;padding:3px 7px;border:.5pt solid #000;border-bottom:1.2pt solid #000;letter-spacing:.06em;white-space:nowrap}
+  #printArea.mue table.mt td{padding:2px 7px;border:.5pt solid #000;vertical-align:middle;font-size:8.5pt;line-height:1.2;background:#fff;white-space:nowrap}
+  #printArea.mue table.mt th,#printArea.mue table.mt td{width:1%}
+  #printArea.mue table.mt th.d1,#printArea.mue table.mt td.d1{width:auto;white-space:normal;text-align:left}
+  #printArea.mue table.mt tr{break-inside:avoid;page-break-inside:avoid}
+  #printArea.mue td.c,#printArea.mue td.f,#printArea.mue td.q,#printArea.mue td.d{text-align:center}
+  #printArea.mue td.f{min-width:20mm}
+  #printArea.mue td.q{min-width:13mm;font-weight:700}
+  #printArea.mue td.d{min-width:10mm;font-weight:700}
+  #printArea.mue td.cod{font-size:8pt;letter-spacing:.01em}
   #printArea.mue table.mt tfoot{display:table-row-group}
-  #printArea.mue tfoot td{font-weight:700}
-  #printArea.mue .mfoot{margin-top:8px;color:#000;font-size:8pt;text-align:right}
+  #printArea.mue tfoot td{font-weight:700;border-top:1.2pt solid #000}
+  #printArea.mue .mfoot{margin-top:6px;color:#000;font-size:7.5pt;text-align:right}
 }
 body.ventas nav.tabs, body.ventas #adminBtn, body.ventas .locwrap, body.ventas .bin, body.ventas #vLoc, body.ventas #vLocEdit, body.ventas #vDel, body.ventas #cpClear { display: none !important; }
 body.ventas #locShare { display: none !important; }
@@ -721,10 +724,16 @@ body.ventas #locShare { display: none !important; }
       <div class="soft" id="pcMsg" aria-live="polite" style="min-height:22px;margin-top:8px;overflow-wrap:anywhere"></div>
     </div>
     <div id="admImp" hidden>
-      <p class="soft">Excel con código, descripción, unidad y ubicación. Solo se agregan los productos que no existen.</p>
+      <p class="soft">Excel con código, descripción, unidad y ubicación.</p>
       <select class="sel" id="impSuc" aria-label="Sucursal a actualizar" style="width:100%"></select>
+      <div id="impModo" role="radiogroup" aria-label="Qué hacer con las ubicaciones" style="margin-top:10px">
+        <label style="display:flex;gap:8px;align-items:flex-start;padding:6px 0;cursor:pointer"><input type="radio" name="impModo" value="nuevos" checked style="margin-top:3px"><span><b>Solo productos nuevos</b><br><small class="soft">Los que ya existen no se tocan.</small></span></label>
+        <label style="display:flex;gap:8px;align-items:flex-start;padding:6px 0;cursor:pointer"><input type="radio" name="impModo" value="agregar" style="margin-top:3px"><span><b>Nuevos y sumar ubicación</b><br><small class="soft">A los que ya existen les agrega la ubicación del Excel como principal y deja las demás.</small></span></label>
+        <label style="display:flex;gap:8px;align-items:flex-start;padding:6px 0;cursor:pointer"><input type="radio" name="impModo" value="reemplazar" style="margin-top:3px"><span><b>Nuevos y reemplazar ubicaciones</b><br><small class="soft">A los que ya existen les deja solo la ubicación del Excel.</small></span></label>
+      </div>
       <label class="btn" for="impFile" style="display:flex;justify-content:center;margin-top:10px;cursor:pointer">Elegir archivo Excel (.xlsx) o CSV</label>
       <input type="file" id="impFile" accept=".xlsx,.xls,.csv,text/csv" hidden>
+      <label id="impStkBox" hidden style="display:flex;gap:8px;align-items:flex-start;padding:6px 0;cursor:pointer"><input type="checkbox" id="impStk" checked style="margin-top:3px"><span><b>Actualizar también las existencias</b><br><small class="soft">Usa la columna de cantidad. Reemplaza las existencias que ya estaban cargadas.</small></span></label>
       <div class="soft" id="impMsg" aria-live="polite" style="min-height:22px;margin-top:10px;overflow-wrap:anywhere"></div>
       <div class="row"><button class="btn tape" id="impGo" hidden>Agregar productos nuevos</button></div>
     </div>
@@ -995,8 +1004,8 @@ body.ventas #locShare { display: none !important; }
 /* =====================================================================
    CONFIGURACIÓN: pega aquí la URL de tu Apps Script (termina en /exec)
    ===================================================================== */
-const API_URL = 'https://script.google.com/macros/s/AKfycbzwsuuEd8Jbp9ZHe9kyGdvRFk81MkE6M3Ua8xSzI8Ri-nN6EZVrV1JlGyXDWl79mVcP/exec';
-const SERVER_MIN = 33;   // versión mínima de Code.gs que necesita esta web
+const API_URL = 'https://script.google.com/macros/s/AKfycbw62krGPJ8q8GwrfdFT7a67tH3JTHSBUXkZVeqlPZROC1ilREeT7UsJ3ZNlgSfI6UOt/exec';
+const SERVER_MIN = 34;   // versión mínima de Code.gs que necesita esta web
 // Sucursales: el "id" debe ser igual al de Code.gs. Cada una tiene SU PROPIA hoja de Google (su catálogo, fotos y ubicaciones).
 // embebido: true = usa el catálogo incluido abajo mientras descarga el de su hoja (solo sirve para una sucursal).
 const SUCURSALES = [
@@ -1424,6 +1433,9 @@ function hl(it) {
 
 const locHTML = it => (it.u || EDIT)
   ? `<span class="locwrap"><span class="bin${it.u ? '' : ' none'}">${it.u ? esc(it.u) + qTag((it.ubs || [])[(it.ubs || []).length - 1]) : 'Sin ubicación'}</span>${(it.ubs || []).length > 1 ? `<span class="more-loc" title="${it.ubs.length} ubicaciones">+${it.ubs.length - 1}</span>` : ''}${EDIT ? '<button class="loc-edit" data-act="loc" aria-label="Editar ubicaciones">Ubicaciones</button>' : ''}</span>` : '';
+function stkLinea(it) {
+  try { if (!STK.t) return ''; const q = stkQty(it.c); return q === null ? '' : `<div class="stkq">En sistema: ${q} PCS al ${stkCorta(STK.t)}</div>`; } catch (e) { return ''; }
+}
 function card(it) {
   const f = fotosDe(it), ok = f.length > 0;
   const ph = ok
@@ -1435,7 +1447,7 @@ function card(it) {
       <button class="ph" data-act="open" aria-label="Ver fotos: ${esc(it.d)}">${ph}${cnt}</button>
       ${ok ? `<button class="share" data-act="share" aria-label="Compartir foto y descripción" title="Compartir">${ICON_SHARE}</button>` : ''}
     </div>
-    <div class="info"><h3>${hl(it)}</h3><div class="idline">${locHTML(it)}<span class="code">${esc(it.c)}</span></div></div>
+    <div class="info"><h3>${hl(it)}</h3><div class="idline">${locHTML(it)}<span class="code">${esc(it.c)}</span></div>${stkLinea(it)}</div>
   </article>`;
 }
 
@@ -2216,6 +2228,7 @@ async function sync() {
   if (!IDX.length) $('#count').textContent = 'Cargando el catálogo de ' + nombre + '…';
   try { await flushOutbox(); } catch (e) {}
   if (!live()) return;
+  stkRefresh().then(ch => { if (ch && live()) repaintCards(); });
   s.textContent = 'Actualizando fotos…';
   try {
     const j = await apiGet({ action: 'list' });
@@ -2874,7 +2887,7 @@ function enterApp() {
   document.body.classList.remove('locked');
   $('#sucName').textContent = sucInfo(SES.suc).nombre + (isMaster() ? '' : ' · ' + (SES.nombre || SES.usuario));   // el administrador de sucursal también muestra su nombre
   $('#adminBtn').hidden = !isAdmin(); $('#resBtn').hidden = !isAdmin(); $('#stkBtn').hidden = !isAdmin();
-  stkLoad().then(() => { mueStkAutoAll(); return stkRefresh(); }).then(ch => { if (ch && MUE.cur) drawMueDet(); });
+  stkLoad().then(() => { mueStkAutoAll(); repaintCards(); return stkRefresh(); }).then(ch => { if (ch) { repaintCards(); if (MUE.cur) drawMueDet(); } });
   document.body.classList.toggle('ventas', isVentas());
   pushInit();
   OUT.items = []; OUT.key = ''; mueLoadLocal(); REC.user = isAdmin() ? '' : '__yo'; pedLoadCache(); LOCQ = null; copiedLoad(); REC.users = new Set(); REC.usersLoaded = false; REC.q = ''; $('#recQ').value = ''; CODEMAP = null;
@@ -3244,9 +3257,9 @@ function mueImprimir(m) {
   let a = document.getElementById('printArea'); if (a) a.remove();
   a = document.createElement('div'); a.id = 'printArea'; a.className = 'mue';
   a.innerHTML = `<div class="mh"><div><h1>${esc(d.title)}</h1><p class="mm">${esc(d.l1)}<br>${esc(d.l2)}</p></div></div>
-    <table class="mt"><colgroup><col style="width:19%"><col style="width:33%"><col style="width:16%"><col style="width:10%"><col style="width:11%"><col style="width:6%"><col style="width:5%"></colgroup>
-    <thead><tr><th>CODIGO</th><th>DESCRIPCION</th><th>UBICACION</th><th>CANTIDAD SISTEMA</th><th>FECHA</th><th>CONTEO</th><th>DIF.</th></tr></thead><tbody>` +
-    d.rows.map(r => `<tr><td class="cod">${esc(r.c)}</td><td>${esc(r.d)}</td><td>${esc(r.ub)}</td><td class="c">${r.s === null ? '' : r.s}</td><td class="f"></td>` +
+    <table class="mt">
+    <thead><tr><th>CODIGO</th><th class="d1">DESCRIPCION</th><th>UBICACION</th><th>CANTIDAD SISTEMA</th><th>FECHA</th><th>CONTEO</th><th>DIF.</th></tr></thead><tbody>` +
+    d.rows.map(r => `<tr><td class="cod">${esc(r.c)}</td><td class="d1">${esc(r.d)}</td><td>${esc(r.ub)}</td><td class="c">${r.s === null ? '' : r.s}</td><td class="f"></td>` +
       `<td class="q">${r.ok ? (r.q !== null ? r.q : '✓') : ''}</td>` +
       `<td class="d">${r.dif === null ? '' : (r.dif > 0 ? '+' : '') + r.dif}</td></tr>`).join('') +
     `</tbody><tfoot><tr><td colspan="3" style="text-align:right">TOTAL</td><td class="c">${d.ult ? d.pzSis : ''}</td><td></td><td class="q">${d.pzCont}</td><td></td></tr></tfoot></table>
@@ -3671,7 +3684,7 @@ function csvRows(txt) {
 }
 const impTxt = v => v == null ? '' : (typeof v === 'number' ? (Number.isInteger(v) ? String(v) : String(v)) : String(v)).trim();
 function impMap(table) {
-  const H = { c: /^(codigo|cod|code|sku|clave|item|articulo)(_?producto)?$/, d: /^(descripcion|desc|nombre|producto|detalle|description)$/, u: /^(unidad|um|u m|unidad_?de_?medida|unidad_?medida|medida|und)$/, l: /^(ubicacion|ubic|posicion|localizacion|bin)$/ };
+  const H = { c: /^(codigo|cod|code|sku|clave|item|articulo)(_?producto)?$/, d: /^(descripcion|desc|nombre|producto|detalle|description)$/, u: /^(unidad|um|u m|unidad_?de_?medida|unidad_?medida|medida|und)$/, l: /^(ubicacion|ubic|posicion|localizacion|bin)$/, q: /^(cantidad|cant|existencia|existencias|exist|stock|saldo|disponible|inventario|qty|pcs|piezas|unidades)$/ };
   const nm = t => nk(String(t)).replace(/[^a-z0-9 _]/g, '').trim().replace(/ +/g, '_').replace(/^u_m$/, 'um');
   let hi = -1, cols = {};
   for (let i = 0; i < Math.min(table.length, 15) && hi < 0; i++) {
@@ -3679,27 +3692,47 @@ function impMap(table) {
     if ('c' in c && 'd' in c) { hi = i; cols = c; }
   }
   if (hi < 0) { hi = -1; cols = { c: 0, d: 1, u: 2, l: 3 }; }
-  const rows = [], seen = new Set();
+  const rows = [], seen = new Map();
+  const num = v => { if (typeof v === 'number') return isNaN(v) ? null : Math.round(v * 100) / 100; const m = String(v == null ? '' : v).replace(/[, ]/g, '').match(/-?\d+(\.\d+)?/); return m ? Math.round(+m[0] * 100) / 100 : null; };
   table.slice(hi + 1).forEach(r => {
     const c = impTxt(r[cols.c]), d = impTxt(r[cols.d]).replace(/\s+/g, ' ');
-    if (!c || !d) return; const k = c.toUpperCase(); if (seen.has(k)) return; seen.add(k);
-    rows.push({ c, d: d.toUpperCase(), u: 'u' in cols ? impTxt(r[cols.u]) : '', l: 'l' in cols ? impTxt(r[cols.l]) : '' });
+    if (!c || !d) return; const k = c.toUpperCase();
+    const q = 'q' in cols ? num(r[cols.q]) : null;
+    if (seen.has(k)) { const o = seen.get(k); if (q !== null) o.q = Math.round(((o.q || 0) + q) * 100) / 100; return; }   // repetido: las cantidades se suman
+    const o = { c, d: d.toUpperCase(), u: 'u' in cols ? impTxt(r[cols.u]) : '', l: 'l' in cols ? impTxt(r[cols.l]) : '', q };
+    seen.set(k, o); rows.push(o);
   });
   return { rows, header: hi >= 0, tiene: Object.keys(cols) };
 }
+const impModo = () => $('#impSuc').value === '*' ? 'nuevos' : ($('#impModo input:checked') || {}).value || 'nuevos';
+const impStkOn = () => $('#impSuc').value !== '*' && !$('#impStkBox').hidden && $('#impStk').checked;
 const impDest = () => $('#impSuc').value === '*' ? SUCURSALES.map(s => s.id) : [$('#impSuc').value];
 const impNombre = () => $('#impSuc').value === '*' ? 'ambas sucursales' : sucInfo($('#impSuc').value).nombre;
 // Devuelve el resumen de cada sucursal elegida. En «ambas» no se guardan ubicaciones (no son las mismas en cada una).
 async function impSend(soloVer, onProg) {
   const out = [];
   for (const suc of impDest()) {
-    const t = { suc, nuevos: 0, yaExisten: 0, invalidos: 0, ejemplos: [] };
+    const t = { suc, nuevos: 0, yaExisten: 0, invalidos: 0, ejemplos: [], ubCambian: 0, ubIguales: 0, sinUbic: 0, ejUb: [] };
+    const modo = impModo(), N = modo === 'nuevos' ? 400 : 200, hacerStk = !soloVer && impStkOn() && suc === impDest()[0] && impDest().length === 1;
     const rows = $('#impSuc').value === '*' ? IMP.rows.map(r => ({ ...r, l: '' })) : IMP.rows;
-    for (let i = 0; i < rows.length; i += 400) {
-      const j = await apiAs(suc, 'productos_importar', { filas: rows.slice(i, i + 400), soloVer });
+    for (let i = 0; i < rows.length; i += N) {
+      const j = await apiAs(suc, 'productos_importar', { filas: rows.slice(i, i + N).map(r => ({ c: r.c, d: r.d, u: r.u, l: r.l })), soloVer, modo });
       if (!j.ok) throw new Error((sucInfo(suc).nombre) + ': ' + (j.error || 'Error'));
       t.nuevos += j.nuevos; t.yaExisten += j.yaExisten; t.invalidos += j.invalidos; if (t.ejemplos.length < 5) t.ejemplos.push(...j.ejemplos);
-      if (onProg) onProg(sucInfo(suc).nombre, Math.min(i + 400, rows.length));
+      t.ubCambian += j.ubCambian || 0; t.ubIguales += j.ubIguales || 0; t.sinUbic += j.sinUbic || 0; if (t.ejUb.length < 5) t.ejUb.push(...(j.ejUb || []));
+      if (onProg) onProg(sucInfo(suc).nombre, Math.min(i + N, rows.length));
+    }
+    if (hacerStk) {
+      const sr = IMP.rows.filter(r => r.q !== null && r.q >= 0).map(r => ({ c: r.c, d: r.d, q: r.q })), TAN = 3000; let hecho = 0, tt = 0;
+      for (let i = 0; i < sr.length; i += TAN) {
+        const fin = i + TAN >= sr.length;
+        if (onProg) onProg('existencias', Math.min(i + TAN, sr.length));
+        const j = await apiReintenta('stock_cargar', { filas: sr.slice(i, i + TAN), primero: i === 0, fin, nombre: IMP.nombre || '' }, 4);
+        if (!j || !j.ok) throw new Error('Existencias: ' + ((j && j.error) || 'Error'));
+        hecho += j.guardados || 0; if (fin) tt = j.t;
+      }
+      t.stk = hecho;
+      if (suc === SES.suc && hecho) { stkSet(tt || Date.now(), SES.usuario || 'OWNER', hecho, IMP.nombre || '', sr.map(x => [x.c, x.q]), true); mueStkAutoAll(); repaintCards(); if (MUE.cur) drawMueDet(); }
     }
     out.push(t);
   }
@@ -3710,10 +3743,19 @@ async function impReview() {
   if (!IMP.rows.length) { m.textContent = 'No encontré productos con código y descripción en el archivo.'; return; }
   m.textContent = 'Revisando contra ' + impNombre() + '…';
   try {
-    const ts = await impSend(true), total = ts.reduce((a, t) => a + t.nuevos, 0);
-    m.innerHTML = `Archivo: <b>${IMP.rows.length}</b> productos.` + ts.map(t => `<br>En <b>${esc(sucInfo(t.suc).nombre)}</b>: <b>${t.nuevos}</b> nuevos por agregar · ${t.yaExisten} ya existen (se ignoran).`).join('') +
-      (ts[0].ejemplos.length ? `<br><small style="color:var(--mute)">Ej.: ${ts[0].ejemplos.map(esc).join(' | ')}</small>` : '');
-    go.hidden = !total; go.textContent = `Agregar ${total} productos nuevos`; IMP.nuevos = total;
+    const modo = impModo(), ts = await impSend(true), total = ts.reduce((a, t) => a + t.nuevos, 0), ub = ts.reduce((a, t) => a + t.ubCambian, 0);
+    $('#impModo').hidden = $('#impSuc').value === '*';
+    const nq = IMP.rows.filter(r => r.q !== null && r.q >= 0).length;
+    $('#impStkBox').hidden = $('#impSuc').value === '*' || !nq;
+    const stk = impStkOn() ? nq : 0;
+    m.innerHTML = `Archivo: <b>${IMP.rows.length}</b> productos.` + ts.map(t => `<br>En <b>${esc(sucInfo(t.suc).nombre)}</b>: <b>${t.nuevos}</b> nuevos` +
+      (modo === 'nuevos' ? ` · ${t.yaExisten} ya existen (no se tocan).` : ` · <b>${t.ubCambian}</b> con ubicación por ${modo === 'agregar' ? 'sumar' : 'reemplazar'} · ${t.ubIguales} ya la tienen` + (t.sinUbic ? ` · ${t.sinUbic} sin ubicación en el Excel` : '') + '.')).join('') +
+      (ts[0].ejemplos.length ? `<br><small style="color:var(--mute)">Nuevos: ${ts[0].ejemplos.map(esc).join(' | ')}</small>` : '') +
+      (ts[0].ejUb.length ? `<br><small style="color:var(--mute)">Ubicación: ${ts[0].ejUb.map(esc).join(' | ')}</small>` : '') +
+      (stk ? `<br>Existencias: <b>${stk}</b> productos con cantidad.` : '');
+    const hay = total + ub + stk;
+    const partes = []; if (total) partes.push(`${total} nuevos`); if (ub) partes.push(`${ub} ubicaciones`); if (stk) partes.push('existencias');
+    go.hidden = !hay; go.textContent = partes.length ? 'Guardar: ' + partes.join(' · ') : 'Guardar'; IMP.nuevos = total; IMP.ub = ub; IMP.stk = stk;
   } catch (e) { m.textContent = e instanceof NetErr ? 'Sin internet' : e.message; }
 }
 $('#impFile').addEventListener('change', async e => {
@@ -3723,20 +3765,28 @@ $('#impFile').addEventListener('change', async e => {
     let table;
     if (/\.csv$/i.test(f.name) || f.type === 'text/csv') table = csvRows(await f.text());
     else { const X = await loadXlsx(); const wb = X.read(await f.arrayBuffer(), { type: 'array' }); table = X.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { header: 1, raw: true, defval: '' }); }
-    const r = impMap(table); IMP.rows = r.rows;
+    const r = impMap(table); IMP.rows = r.rows; IMP.nombre = f.name.replace(/\.[^.]+$/, '').slice(0, 80);
     if (!r.header) m.textContent = 'No encontré los títulos (código, descripción…); uso las columnas en ese orden: código, descripción, unidad, ubicación. ';
     await impReview();
   } catch (err) { m.textContent = err.message || 'No pude leer el archivo'; }
   e.target.value = '';                       // el archivo no se queda guardado en ningún lado
 });
-$('#impSuc').addEventListener('change', () => { if (IMP.rows.length) impReview(); });
+$('#impSuc').addEventListener('change', () => { $('#impModo').hidden = $('#impSuc').value === '*'; if (IMP.rows.length) impReview(); });
+$('#impModo').addEventListener('change', () => { if (IMP.rows.length) impReview(); });
+$('#impStk').addEventListener('change', () => { if (IMP.rows.length) impReview(); });
 $('#impGo').addEventListener('click', async () => {
   const m = $('#impMsg'), go = $('#impGo'), suc = $('#impSuc').value;
-  if (!confirm(`¿Agregar ${IMP.nuevos} productos nuevos a ${impNombre()}? Los que ya existen no se tocan.`)) return;
+  const modo = impModo();
+  const cf = [];
+  if (IMP.nuevos) cf.push(`agregar ${IMP.nuevos} productos nuevos`);
+  if (modo !== 'nuevos' && IMP.ub) cf.push(`${modo === 'agregar' ? 'sumar' : 'reemplazar'} la ubicación de ${IMP.ub} productos`);
+  if (IMP.stk) cf.push(`reemplazar las existencias (${IMP.stk} productos)`);
+  if (!confirm(`¿${cf.join(', ').replace(/^./, c => c.toUpperCase())} en ${impNombre()}?` + (modo === 'nuevos' && !IMP.stk ? ' Los que ya existen no se tocan.' : ''))) return;
   go.disabled = true;
   try {
     const ts = await impSend(false, (nom, n) => { m.textContent = `Guardando en ${nom}… ${n} de ${IMP.rows.length}`; });
-    m.innerHTML = '✓ Listo.' + ts.map(t => `<br><b>${t.nuevos}</b> productos nuevos agregados a <b>${esc(sucInfo(t.suc).nombre)}</b> (${t.yaExisten} ya existían).`).join('');
+    m.innerHTML = '✓ Listo.' + ts.map(t => `<br><b>${t.nuevos}</b> productos nuevos agregados a <b>${esc(sucInfo(t.suc).nombre)}</b>` + (modo === 'nuevos' ? ` (${t.yaExisten} ya existían).` : ` y <b>${t.ubCambian}</b> ubicaciones actualizadas.`) + (t.stk ? ` Existencias: <b>${t.stk}</b> productos.` : '')).join('');
+    UBI.locIdx = null;
     IMP.rows = []; go.hidden = true;
     if (suc === SES.suc || suc === '*') sync();
   } catch (e) { m.textContent = (e instanceof NetErr ? 'Sin internet' : e.message) + ' · puedes volver a intentarlo: no se duplica nada.'; }
